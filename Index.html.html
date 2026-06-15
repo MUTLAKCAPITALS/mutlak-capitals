@@ -1,0 +1,1869 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="description" content="Mutlak Capitals - أداة التداول الاحترافية"/>
+  <title>Mutlak Capitals — Trading Journal PRO</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#03070D;color:#F0F6FF;font-family:'Segoe UI','Cairo',system-ui,sans-serif;direction:rtl}
+    #root{min-height:100vh}
+    #loading{position:fixed;inset:0;background:#03070D;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999}
+    #loading-bar{width:200px;height:2px;background:#1B2D42;border-radius:99px;overflow:hidden;margin-top:16px}
+    #loading-fill{height:100%;background:linear-gradient(135deg,#C9A84C,#E8C96A);border-radius:99px;animation:load 3s ease forwards}
+    @keyframes load{from{width:0}to{width:100%}}
+    #loading-text{color:#C9A84C;font-size:11px;font-family:monospace;letter-spacing:4px;margin-top:10px;opacity:.7}
+    ::-webkit-scrollbar{width:3px}
+    ::-webkit-scrollbar-track{background:#060C16}
+    ::-webkit-scrollbar-thumb{background:#1B2D42;border-radius:3px}
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <svg width="180" height="60" viewBox="0 0 180 60" style="opacity:.8">
+      <text x="90" y="40" text-anchor="middle" fill="#C9A84C" font-size="20" font-weight="900" font-family="serif">MUTLAK CAPITALS</text>
+    </svg>
+    <div id="loading-bar"><div id="loading-fill"></div></div>
+    <div id="loading-text">LOADING...</div>
+  </div>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script>
+    // Hide loading after app mounts
+    const _orig = ReactDOM.createRoot;
+    window.__hideLoading = function() {
+      const el = document.getElementById('loading');
+      if(el) { el.style.opacity='0'; el.style.transition='opacity .5s'; setTimeout(()=>el.remove(),500); }
+    };
+  </script>
+  <script type="text/babel" data-presets="react,env">
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+
+const LOGO = "data:image/webp;base64,UklGRswuAABXRUJQVlA4IMAuAAAw6ACdASogAz8BPpFInkulpCKqIzL5kUASCWdu9Jl/XcVu8P52MkIrYLv9evV75//MILvQt8XzhFPdg9IefT0r+YV/cvTH6PPML5unpi/w2+z+gf0u/+L6QD//8A/6+/13c5/y+o5+ee3vxU4a6Cr7b8uvj//feBf7h4gXs//aeyNBPcF+7X23/p+mpNc8UewB+ZnrN4Uf331Bv5//gvWV/yvKj+xf7z2Ff169Oz2QekqNAPTmIqFxXuu7+SuFRb4JJjD27laS7ZdK7GyIyeXbLoyTG6itT5e5aJHDTcUrlYDeqDKem7ClpWyTNWSYt0iD7bB5WbTArBoDuzPjjRgCLnwRQo1BDHijsJ6y0nDpFsA8GNFwau2XSQzDpRJnrMYS16USdUxXPkisebILEGxAodDzxRZH1RECGVRIk8yviJDhU5bGy5gO/5x/cEX3+yo8IxK5z9y0B5AAWAGKS17tl4eSQdawAeUCyqX+ovU8o3K18ekAKQyZ9WOeG39O63+eNv7ZkHgJoExBjsxuoyGqScSQmDlAt7QsoevAKORXJ2P3XNHzkiorYMiADYT+OwvC2rgv46o4O3H3PAck0gvf3+ZyU5ydeDA0dvLH3EITTDAjXKobLLNdm0xtx31d9KtyvO/4EkSa+5MGUmkMJkcyJZsQZSZne27dOgq5ikWlULPA5Os9CvExPBctWc6GgvTTYlakLjKn+e1r3R6Rf0J7iNgzC0qEoxZ21rIbwYzpk54+rvTMySQUHjxmtc+pj/2jVL3nx9Y5TdV8aTY4plEZqII3TWsdC9wGMV80BXMXmZBtPJXYMHHMHMnAFu4mGLQ0JzbIbB/avZKU/fkb9AOb98CNiCSOtKYD4Yz0lC6Udusc5EZgFSy5CUpYBHSPJzL2+iFiv9+Lg66yQ13ldMuBEeY0K9lBHtfWFqusqNQ8mOrN7NQ6gvuYwRGE6/G08a8bcJS0y7Jap/K931okXRVyerbDrWbfHXivFBRj3KEZoexT8NXPCfB7p4HNVuDwHSCl5wAIBURvKQ8PuKv+DamvEbWln/W0X/SlMTdo4Khc8d4HVNMnaOPXj1JpBdWVaHriHhChnVDMlS+tsNX0K9rQ3WK4/CDL2v4ITXZnnwEVlXFtvWig8Z7MaFXjqwWCGBW+dHovJwFl5Yvc0SK3petDGw39SuQMBmEoxWv0Q17nU8DEBapQiupVPDd1kb4JSLr9sAJNVCbRbLN8OfZIbZrK17EM1D4wPDpXY2vUru7567bH2RDLEQHo4zc/c7gs7mbUhkyGfJ9AuWu/olZJCgfouvi/9Ls1t8MBNVC3MToNgQkEfqOdBybm+7fGxiPSQV9TGN/0Ywrnwh3t0wEZhpo2JN4Bcj3F0F4+lewFx2gLteD+4X7pegEboYkaGr86E2AFiDcpns9WVz4LbKI5GSTMkedIAlgqm3uxeACEjBJ/Ttrhhxbjs3at7coO/2vmB3PhD2DYzlKDhrR/0wc/1TOLRxXTWIXRuA+0fenUZeEKM5dzVGqWYqLJ7rbN6sGa8I8N5Olweu6vybTfFOpK2lpaTuXi1w10pjbjNlDcsJXovxWi9dYmISluyzOCNa1byNu5k4Ur3QVermYF7JohljbzS4NixhHrNDbRIsuMEpLwq2BFQwzkLxtzi3vyiDPXJdislQ4/79bOaOcQb8N8eOdzpq/Q1LGQk/QllO6BweE8bex/DNqreKLVILzdaNGMRGn287+6vAMV5i592oG8AIZw0XM17ua4OQncICipAmUbBxG/vgG1pOYxKpPBZGE+zY0QUFQlQtm6Uu8SlIEBfcDx6o3RnBUaSJ4fdXnhC4a/nvJAbkPxHn2wgsKYaLZrffAy9G6kZyFJjLcSJU8gO0+E86+mIf6N7VeULVfWgHioCnTDpqtfwFI3ReErXy3NXSuuKHKyWwV6IsFI12/6lHZWKneV+PjruS7hFH1gYXqz0PCj4BH5WHz2Nc2QB9vP9pQ/BZNd6VFrxYTncEmPaU6uRCBOfUmf02A7PqtlLaMbMlFGz7WoaPTH/039EvhDO++O7T2Oh16+YiwTFrFFnjcubVHLkVmxtk6CooW9LGHww27kM6QcbfEm2CfnujOSs7li8U3ADd4meHMzVGMsCDAC39PhP7ni+w8RPGH1fNhTKa4PP3rcBXyIJcUAVJRAVvHjg73Ib87Apr0xEA2w81WftPUCIJGOn8fK6L8iJWP6H1Vqrupb8ko5GzK0mtZS/+ATWBYqdFlzS07PFpOKG3Sm8rvGXWXrcDPBrEobTeHWAdN3rzJKS+3rBWntzrOOtFVLAdKsjK0C8uCr5s//ooDq9Ofkdu/b/jWDkQ7RuQmJVwdhXeESD36vhFpWSr+Eqa0Lye5xB57ZFYOH3HR2U71EI1mL2O5wZuFfwE8SXst8wZBLhGXW784U90EVcbPvqIiOXrr9BNMQ2AacOu6s/LiBOiuGIPcog6SMratbUjolylVokSBtPq8nSGAA/vnsT+6DcLe/LKBShSuzryf5Oe+YWCiqEsfZUFE13YMDfqsLVmX/9zGWw/wwCPY+G0uR5g8Z5nW79/bGyuQ3WNAoKvMu7Ci+rXKca2LNOp7zvUpTCSyEz+lkQJWcIkJcjZgkHJT+hW96AE490TZKaozAG/1nKvIX9w0AniOQ9hb9MQGlA7H4x91A4rUSja6/c+NuQYJO2c0rb9mFKUWcijUTM252ec3oi1efd7hHLxeIIooZCnCgIi65z9hoMpfJI8oQAIgVFIVYWGnXeyTdxLay9PBdtTm5qRX4PfvKrEb8ADrIVDeIQQggCKZAPjGnUDqh5J4RCVLQirlbC/SVSgt7VNs1BqEYXv88YVCU1LlIi7RtgddnCYRPXstYVHbZS5A2mJV92m2jtF9WuV1l8UuRWQjg3A/U87xGzlf/c5CE5WJCIsueO2Phf+aN1xoo37TFxTX7fHvc2rl0Px6FGWg7Fo4sUVZHtr+EBvgAAAA54Az4McXGYAR68p/EtwXADB9fyULEPIWdOVXPOjIKXJJRt1XQujBJH5nL3gVmlmgAyaPXm+zAnYMYLypq4MBerskwDF8Vs/AryJMr7+Zl6bZbSMQOBiehDWTjVM7lbVq2HkQpw7wsXydZAculQBKKOIKrCN9MVnWmK8UvWabGg8MPGOk1rdV+BmZui0HtfH2040AK4ikDoW6ejEIWnYkgCQwPyhNA1jgv6dGvD6zrTX/AOf+5xKHphYCxg05uWIKC9Dr1TI51pSwlJps9fSvMtXeCv/5BbcP/+rAWwNGyOA+iAABDklxtq/1G2aqWrorYZvNQNLP5z8oTLi+k9uwMA3J+b8Od4R6SGK4gufnVQFrD5U6myKfcHOQ+MpnaVSgk4oSYfu/pUuOMH0o34mDsylvYtmz9E8+u1xuKvQKs+f/DAzSEwBmi11orJAriOvaw2okR09Am/Nyu47kEcsHozvlKiblBWOHMQzM4mwAjUVkIUHgBP5qa5vKLucZOz9fbTlAtgAgd1nH7C+RnXGn7GFPXs5vWA/qnMx7RAXB5Fw4GmW+y/+PO3B8Ufr4q+83NpzlR5/QnFZmhTt1Zd0tEC8OscU16w/NOX02tgFNm070ISeWywCo6q2kg0nKdNi3/bEkYMQTlJOA2JI9Jn91ERosSsZEr8YSuWzZHaTwjuVl0Peh0AVRPPNYyaV5gAAAAAAAACrfzaqpKDKUy79Zpuh8ZnEcL4GW9AICI5pSVIu3P0JKJwsA7xpXPX13qHY3PdGfK7WRxt8WKG8GSIugjteMU6kyxZKkCJ5TvggBQlPoKO+D/Fy5eM/j8u/JMwnp3CRYR0Gt6MSvYvDQod5aHQFRtK6/26IfsNPBL3iPU6Wuq0bvisAGGcYSFKH6knKfdP+4ChOYV+p+JWj6JUhOJbpdEhAnuxYQAphi5AOlW0ErGprmqQxfVH2PWrIlUU/2SvSPE7h84r/fX8ff0S+nMSnXdle0LObFXE4bZbFkjfHaZXWoSFUvkACMp9tWwYOoMSHHtW0se35vHGViL2BlhHmJF7sKOXWmThwXnL6qbLXm9lVEQWZjWqUZKwdQg3hzin3WheN83z5PNJeENWFjoiq69ckJmG0Cq8U0r/Ttel8qamhUatGPu09KHGLNXv0izTjjKF+WxVIyRTD5FGPV00GyE51psiY4bvI52mLAlcHDk8fI/+tke23KrTVTRsanrbVNFHFxcSs9x8CFAAYZfy0rMSQDUZocHfKtrpB3Bckdh/xaqsFYu72K1Ih64NtwDV04Lh9DyKp+12WaC3wC6fPREd+rSVVWhYzhClcm4pTAoHdtt5tA9R4y4yTStk/ATdX3D9T16Kx9UwL9LSuPPXDpi3ZK7P9uiOvCwgdETprv1qu28rKVsXoviQVB/H31BqxYTgf4ieq6Xa1fpSt0LRiqh8Ub7N5iNy2/24+pva47bVEwH8pZk8VIdP11dCE7iBIoWermpiZgXcz47gXvsnepNL95TDL5R3R2BXepRZ/afS6kCDwUS1E7I6IsCfIaBoFTw8HqMpIQr65cmR8tJvKxcBRK1fT0xLUlbrN0D1f139+E8Znu0HSlOIQ7pSJ5zpE+blVv7gneim4Z6VIjcrHwONCZqS4DD/IavGUQYMNVGzB0OT0KUnn2ZLx/LQFIfTubTDvyg0rWj2QkrS+N3/D9bWoR6o3Y7uTPdT++HzJTbMcL4y76aTCKtCfi1vi0dqoQ0uTa76+V0L4anMZ23EpxWO6TFQuZWviFa7tO+diOeBmwBmuoD5Imuxm0ilcDnXO2XXm8Wx+plaKfl+OIcJzuZAvvfJGBW2czTxN61alobTfnHi7PcoWHILmQcx9Qb4y4UGb9dXvweEANTlmLeN4d8OozB2w/H1d3ETuq3d42e/pJb30rLs1dG9F5zCBSRvR4DaDc8h3n3iCezRWhhOHQEyf3YMVj2iBRNN5923RRwTcWzPrO3zAMnbRFrOPlWTp7UYOXY+3cJsst0MXw6bBpGjTwYewuj+0QmBBrt2OBDyEgrFiJlULlBu/C02qoBIpASWhjf+dNOEMcEV7zdmItJhc/yVOTYx/Dg7bgiUQvrsyTD/m1556i4b4U8QN3ARnYr9LUYY1U8XDSeqAlsKd3WhQqdBHpraWNUzC78wegDjuV9i/xnP5RWlJJcDNneMF1fqHvR+EJNbXAgRCptqmrVNWmiluHhIAy2vfyjXagq7aMqNjKGWIAMCtU/89a4vFtjOclesegMhP4r3eG7IEId8YWYs7d0tWktdENQxU75K9OX3gZqSzdO0PxPsxEI+uS7nHhMUc82p1g0n8uJ6L20BmeSp30VIHlmf6/mfwG8wOcXb37/utttZIXXImF7pbO3bor23r7ew84IPJgQyW9P9w0lTt3mI+Y/vYrHMhCFmnABodNHD/fA7ULhA0u8xk9zK+umn8zjMdFhv+HSdWzbCIL96T+J/J3RvNzsckaU49VM483pz8GxK/z3kSn6htdFO7Nzif/T10VohKV5V1CgSRvjrQBblEeBFfAp1B0hKYXmax4KqF6+4ScG3/nX6Aw7rRy/4mCqiz+E91OR1SwxqbniD+aGzhAoO0LRXpIIoY2w9jvS3J2A0hjDuu/NCOMxoQc+9LlTiZBZ2lo/nH/jeGW2m7m0GoZYmIfItUxqk667l0lwCbsZn2eysNcnooEjnROwtFXWPlEybf6kvI46rfzsTT6lfLoTNjZ/htrjXfzVFKHBWDBTc0Tqjw8kPXTPlqtvLFrB6e8+kvN9Dz7I49tf+DOZlUpntO/KpEAoTf5boc2igu9qq5uGleGTWwRTvudmqYhHUT3c9XfEK/xBrh5Mak93/7WtOHUaCxzb5tw8mRl6Gd6a33LVdJHNdu4CO2GsCYouNi+gao9ERiN7qi+LBV63YTr+YxfhMwZ6ipSw559XKra2JBAHdbOc/lZUNqgtxqV9v9M+tQTU+/SCfLpO7jvFCjJLaadXRxRF23++zpfvJlpH/T+wUWDM9q4bpffxRr+9cvZwNeoQNOnuXxWTMvLLzSiuvTiIuBj9+ixZ9s3oVl5hcy4qbE9rL6dGJbavC5VZiYZmeO410cm3k/DTLqoPdhH8v7eQ0UEhaOfS6Dk94NoCFfR+XgoVCPVI/6ru5Tn9oJ2jeQxpICsQongnKoGiqgGS2ZGszPPZNae/87NrdXA+8eB1YepOG/XBcQ/wfcpvz8r21JVF2minP9GCEUlh5v901zK1O9RLyO3pQnMtOysLySOag4aFs+TFtfGHbcs1PUanQUIx5kmNoW1aW7hn/38SJGIdK8Ds0A7NQNpnhvUedXlWHFLCF0vV7+h61TrlYJkb4cOcxsxQFOuyrlQu6prYDrCcYUk27+ATcAfuud5maP4EUw0J7H14D4qxTDFaosRwUJEISmY1i0CxGXCTG3N5eRzG13hjfI4mCTw+e09ryZ5jTMYfWiK/YxGWI7mGZISkvL06d4J6zp69dwnuUQiDTg6lGQIhVSYzjDPQFIbXk/EyH/K3WC1Hb5kIpxQVXdc0V+hMB+dUg3HZOjc1ACedNi0w7CuVGH18gUEfR3QC576v14Lbd/79vfAH749n+/Kp+6sSM2AOuQ+TYKrfQen9OfIbI5HAYb3+WLKprvXew525bwjWjFgbFTGf9TAghSnnzawf7N2Du2kZToEqONWzELPX+DoMItGY4VArzTPe7RcRhH1OYY+tnc0brDDh5LmP/aVIGT2mHyg9D8VUwePP1Xc/RxFI533NYfOVjjpZ/lrOeq9emRP5UPYB1/DrfHtf5QCy0iiT2XqoNZ13zcf7g8j4WK1b52Q12PO9wAbwY9KyufjBQya3vy7s4gPsYTwCZe2ju+PB5i6mSZ2/ZBfeH9m71+0Qz2uPh1CEbnwavOtvwHLQXKd24mXjJDSUS4X4czMxJuVEi7QybgInf/CdICeLaNFCKhUQClGxl582qHPmdZUYq2tP7O7wd3e/hFIA9cYej57hqxqwPatXd1aOXLllOjqcEup3BYi/OxpWF8SpNTHbgItDLn+9zJ0LwzzY8zc7TJgoe7JxRLHELyOCqaJv++4eA0wNeJTYRfFBr/rv2U87VgXzG/gDkaw19+6eVnnP6oMVNEJLXB2G8K68d2IWuqQWnT3fUX5dGbjCiHW/aAKYEKgPqC2MBOW1AvvK2ARmjNOHi8SWhXSTkH+YXpA5N5ULdF+K7y1khouZMhchJ7oIn5XAB9eS8pbZ8Rsu8FC+pwHeCgDg4IyS7axO7wau5/hyoydpgM0y20tSTC7pujse87fjjdXk9V8B0/2ykRHP2QAkk02p80IYBkLfDa6TLEfMxAaNM3FduIU8y4hazo44Qa71RaO88ixRoFzOfSWPSgAb1bdVnpVNVNkBU/0tt5Cl1UbXqHmn80EG2z+4wKkI312apH+Xn9XK7lDB5/8d/6EtnX9oaEx29ORyO0CUu5LsYQMwkuWPH/9sbu03ciu1YDZPkg4KzO/QcWII5t0kOG0DN4iwsSFBKYb2TEY5k9UWnZGvEC3JyBWtdZvKtNJ7EVP3yX1LRfnplQoMVjqTiw4HnqqeCWbUAG0+nIQnhEHhh4G7HGORo67e1zASZkk/CFfSqs71x6gd2qfBjLF++VERxGL35xPbiDAZ+3yiM9Swe+T3lc/wtWzpemGiql8V3igiEjhffFTHtVRvuvQxZXfe8zq7gs/fyc3apmsViIGxgi5a+GeKYU9e1Q1rpEDQMXROzxSWjSVih3sFZfM5C0pLtP4KZkkzF770Q1SDXYCVQvNmC5ESLLAD78RXlyhE9898fjo1JtI64lp1eiFrU0R+0PRHmBAwKuCvClVaH2Zj6Fl5REdoT8heWuzTM4wuIpWZ1gCAbbyLEON1UN5XJtnBUNRjcVgIaaksusqo9FPyuNP1rNgB1ZUVXaivqfm1rCTtSqk1y9A7wA5PTDcbQXb5paD9H/sw2/Bsh4j9NcGMLOBcyq9kye9MM0bNttSJzmThzZ8xdZ19UJvygaWdjSOIykIvT6NH2ArpLdrK+1RDCJmtb2pM3hF1GUGM/Qp45uQxIUr7x4CBDMYrpKF6Anep8rAAo3yjHKM3ytrXfkoOr12pQG3xiyiScypvM6saic5JS0RFPq49M6ChsnfbQU8Z0G6vpXxigJ2LeMp2BiADdcyTKDTLqVqQLMSeznvsjh6XXTvmzDGKNliHcrShtIzp/0Pc9lozjnrmKEFu30bkV3n1hMNZ7iMxk8zVWXuu+ZsVilHS78yi/Z5SqK/F6gLOBv7Ro4ORdN8QF0l7hyH3/NGtA5WTvoD1OjyH1OW2qQker9qf0wveXvCX6UBkfui+v0LHwPLXmnVrTDR6I8AJXQmU6qviDVukTKE1jt/lZYlBgWAW2BQ+NG2YR0BXmsT0ETquVkLvVJMlocQihJ8AzhQd3j5ONC4yFEwn8KPs3gBkahmnL37RpjlYTKVFAz6COCYI5nVTiguHlpGrhXDEH6TQPufduAkEnG2zhQ0Je6kpxp4C9C/E3cw/RsEZLpF6LhDm/IEgp7zFYL+jWQXFVEOYHSG2uZ9/BK6aB1xAL+D/fdqD+ANmDEcSNjyltEtZ9R0P3+/s7iu1d6NytddQxfmwzs/ldqemx1elmBaGZUIZp9rjGVgBPuHWx2DfV3CPAinCKU19gO+bF9mKSQz4slaJfunYNYo3nPgvye8E2oveFNB/8vtdQdJlMPCDzwfeX7Zn1rIfCMqKrx4UKThl10g3YPh3HFVrn1SK48RiVY/SxDCfmhbDGHyHPrb60toIelmq5WPx9vyuMLpUd0lyNfS5wo8A1n2z/Qx4c3zkgd0Hzts6NU28P5stAZiCmFpyqGQesol7I0ao/U+hEFNIp1j2Cp99Fhmw1kufwYWbKcKGjSJqiyZI6287NzqyOtLtWmV9ZHBmaOC80lPDaSEOwwv/U09BtdbGnLXiVCDIB3mFtLP7WmtBP1lhXYzbsIJRVKH5H9DNbbWZVrthh2dAHMCUrZGxv11ES7HbTh5c1f8xyUq7IFPKnQPgsmfuCoz9miyH81fecPZ9BMaHkWyggttD+xVzaPlg2L5OoC7KRUDx5pGOE3LEY2MQU1h87YaTn1E/tKE2Rt5qdZJwd1DZm/4pQpoDxT1/DULxzoX057j7WxkLUOa7M9ePRFX97hnafVozOJU+d5dmWhJ2tA3bPQyQ4AQoNFoghS32ats/4Kg3765NV4yvdHmOLRaOwBLh043IyXBfCqmMS2GghFzySliE7D67ZXBuxRxvwy44GsZgMCvof10UOuFo3sXo7E9FJE4OdNxoV4sR8M5ZSk6wHSKLIDZpOY+PEksP/cf/hChKo6IyCBNAopf0gkMVCUXPEDXG2gkQwrLCHtS/ks0oQnAGOgnEahX1URwwBcHnQh4jP+fa/jXlKg/k3cjEEhPALJJm3DXqua1LMU/jR50UA497RxJJ9N0TOwqJkozEG8eP4YGaZG4qWxY2DpyWZRaHzNAWMgoBRZYdB1EMAVM94cFDK7GDtDkvwO+98eEmy4rF6xoiuNdKoVFTdd+433m11FDCwHXBmcqauusggl4fi2+xtyaodBx6kAA7BOxH2vNTIS3ztD8Z27KYHwJhg37TcVfyxszucsAuVe5dO7n1zZJi7OttEdY7MlJPrnWtVnTRVGWdhCGKqFfD0xtIi5kY8oy7upCIbawt1jPe2yBWq+/zRi92ZgCqQcZB1B0EEnRHVSr8EH4gMwSygDKP/JJoRgy/ZdXh2ZCSeSh3rmg4pCSaTVmA/jz1dYUnuE/HWB7tcZXk23p1YCuMENL6wBTnt7zWgeOITcowF+aIOku4eX28z1tSL/GjgSQ6y06rd7smA+oGUHGjSJ5RII4xwqn4weA/pFXNhvivXtYEwKTyj77ny37Yp7l+G7ENrHKzcY8wFj3rkOSUZYx8MC+4RIe2Qy1f8q/7rx4fq89354mPa95smXlRXON/DN3BSfeAPUOBEpo5AI1eeX6WZtKntnzX2XhWcUHqOWcdkco4fwF9dd/4UbmKVHkMBNY86bRiaJHmCN6oFGZFOmKoxsGr90PQ+jqQNSBGPS76254jydtx9oEP15i9gY2iqBYL/rBDJ+31JqOlySqiBo2H9VdEJEJTmsJuwc0XSkfs69/1GINJhD3Nfd54cWyHEKrDHOxBiQRhGpgDtmC5Y9D0N8khAPN1y3WvscYv0Px3jlskrkNA80xGV3Jf888naHbonYSKVLPES98+ly2tfQmCiZhQDVJnQX3OQ0Nd5+OUnzIoHPQBmx/+8UOEXEKWxiziNjwbXfLsDIDZaP3wKBIyh69gSg0PeJRNz+IegEZfCYQ8mPQFJe0mSam6oWLLCKZEjFrPvlMndaaWcWxUDWyblnrK52hlgkavSghSkaN37hiLAn4YgreUcQ/7qPnwO+yrb0w45VEPAE2dXknnGG6tMxVfN7YSKsThyBBoIGnjNiaWR3VCaoindm/26jpcfAI7IZvhENKoHtAcCEsP0RnkmKzscYrwAwbxaEN5XcqcEg5Ntblhxy47i0pbwecS70qR/k0wpLDa8pR0mMq2EIWjfaAVQUWS+KRGHlBP0xU3ViE4eIc1/DIUSKkZkvQQkYrJGTzYH9fZb/4Fbuqd1mdIdtkHgADsEQ8nDjKVcsbaVthkIJErpO2Om0j44QoLHJHceXTizWw/4CWzy6iniyf4UzpZzDPcEeDVumK9o3jNh5W2DFG6uwBspwO3bD30QKb3Fr+z9Ue7dONe89DCPC3DRB8JYZkqmX7Y6BvYcyoNMrT55IfbQ97uL2fEMV5ROvGiDHVzFE7exw71P6ReRZDc3gEUQ89wG8+ksg6GC4JohGvfqYKhBREGLtfxslbfofIMCdaLlOZUWXTdSnaPpoVcD1MbK4UcbmhbK7QKpHw0X5kjneHyOSkRu9cQC54zH8/6n8r2pL59GPwJTffPjyRgFXOG+9NdUIgljyXoWzSQFEQw/e9Ng5g5PaciJVR2r7VtZOmxz3tdQl4q/NFkEPi/mKk6J+JBhWelHa0MK3X0NlQUwXyLDMO/koejI1Wf1yK+rokGKoe1InVYUTG9G2c+pd1FQabxzqTpqq777s6yF33xLQ05gsHuhSZLMw1zJeucIogHEcsXbC+g4U8XglGC7VcV4JTW6sIHJkwT71Ji8K/exwWm15TdfXjC5+3PU2bB0T+K/tz1joJSREQGUAdR7KkzUWikuLb2i0nBHBwkxtTFmaBqzfx/znRaVpnwrhxtNh6Dp7K37f5xrsJHZvYE7sO0+aKxN3AHsXThL6HYg9ATcXw4dPRAMplwjk/v+pC3EZoJ0GRRlf2kIaPnKS2cYKpR/YoAMQWM53QA32ADaZoJBdG7dROB7ICfa2AXinTaTzX0CapF65aaU4lY1lWy5G8j+QvfJFUKJGVTc8ZVSIWcMyrlKgjWNOnEBEERPFxZGJvQc6LnuhaVpxxIYsVJ9vuB9XUzZLoITjX3QWHlfNohprumZ3jS/H5fLiLtNgUDT0duIonI22CpCnJD6kRTkxjteWkWYK84dG3aUKXKaih9kqL5YJijGvxBD7qXQBedOiUlMS+H1e75a2j1l0Y2QxpoS3uca/yUeMU7d1PoL8rqEv++rz7rtNRi227y32V2VERPOQ3E8sN7BttNeMh6N9SoBpSqxJg8ueG689OTp+hdAGM3jXu+r4G/Q2/fDruU41fvgHJbVKnZxcsfrK/qgVekdznVPhvrBWnyfIJoQQEue8Dn8y9BXh5q332RDjLhIUQfDY1kd9YWAzDOeoRvXKXcY/Wyl5sYqCfQlf8l3EfCZl3ntbm1IhadF1CMYvJpESM9U1kHGyjbyPcHxflKYgr9y3Jk/apWH833nkmrquDL5UwjpuKZzN8OrVRxWESb6whAreY8WxqdS9yhRGnfISwCsm+5UNnOgRZNN0Si4jEFwjjPedVKh3OA1SuF3hC98l7LaAr01dSey2Q9Hh440Stikf/A3pjaR6n32yFSALpdzoekYO2fKDTJBERR4to57Kcex2/BO/H2BGtiHa7MoOe2ZYCDAv870xV4dhOy3QuKQae0zNnWrJ93EfmaBoYwK91WbuDa8e739L5Fp+hqcnwAYLBJmNGbsJMnKxGf1t3fV1/qHG4qh0duEeUac23URT3nsGhn9vWA2sLejtoXyRLg+pvF5pkuT4J7JGRPkKM7adHaeymaqpn5qngRHWeXEwa13z/kb8wPvMqcXpPcTfSanlv+aI2IOjLL02siiDjzLYFlgjmahnPfC0Zqs4EbNmeyb7hNV32r2FErwT8rSiZVWv96kutVFx+JpMETgAz9qLjVtW4AquaZQ9zTEmQsrahim+QzTwbghhL6058hFWN9AhJYuE9U8XY0b7gFISBk7DFsIQ6hctEBUeVW/pAV2iB/c7Wqjt9L7iBq+cuokZ4r8V8Ha7FeEOHrZunuWYB5M6ADld1pxEwZw8kcfxLdEZWyN4hMK5rkZpyMKAYtPPWBA83Ib7Gpztid/b/W4+fT15chYk2A/meheukBeDAVcqCNxlYkufkSNZM1MjBV/xrX6HxmE16Ib6dDCoqLxlPXs0L4Fz5g5miXSg3dWHDptEkWMJQRxB1YivQRj8aayAm5yf+hVT56KXM7dFbAPYtNAROdHS88y3sTA1lj2APgHsSWuJGV7/U28fqf1r7P+mBOrnLAph6YIwyq/56S7Um/uaD41R1+SKjjYtqqsgaR2/3ecP1AebpmB+Gt/wicnmD5XQLdmIAz6FBE9w3v9VZ/KYfd+3nBMnk/0SdgIsEK0Fe4xoBt7lUFbF3NDqkORMMTz4IBE6+lY5cd4EUJZtosc/MmkKeDZAEO2+4CK5KxxSWXc+54hEvJZUgXZLzV6LkpC1hcRQJVr2KVKPDjWNEzerhiy534xckB5KHWKA3dDetXjnf3djKVToI5RP1BgHjdCAE5q7rtoAUtucy2DFb8RFzz25vhz989Z0QvKSmzFtfkF9UIJqVcOuQrodHetSwXK9LLNLcqWaWXVTgaOahnYoGoZKSEQcT0eemKlg/TeahdgXL5qP7DoKKoiWDmUDgj3cOXyzDa6XqLvafoIsA5u8KTNTBt4Q+0WgSMLDHpRRVf8C2wus0kch54S7QGuEaLgfA+zYhv0zSHQP5RYv0cqoj5lyRfBHIbhMRXfsvdC5gAuiv7TyjULpg6AVhFHw92gaBEx2enbR1KgQe9Pu3h6OYijqbo38a5ylOWoCTplcFTLnLWXFuhsbpQwewQOFA/7m30ZBXx8JWgWE+kl/M294w68V16pDfBdVWvFhmiC96IQGZO1qyMo5eNm5MuIU6Nl3Fk+KtB65l52HHpJWG0B4ryILEvQwqgEWg7hRMh56aMwEN/h8h9Xubur0bbwHrS4qejGB5bReu/lQwkxned/W3qdvUkyAISrmPqo7GzGCNVdbS0v0JxDFTnFv1MtK2t2Z3KyCk2eHRvitjAy8uJdAh1HlUbC3gY+4cY5uS2fQ6qDvRTHaSZLjvmg50x+Z0JJa6XjvcwKBvSgjAHLegWJuvzaJ3SnXSye7ZSQpC8TZfrx+yRIDd02/IMFnW25KOfrkllZy9slGGK13zA/e8CqSckjC29BjqFmCpLxH0xWxAYB6DaIAAAA3dn6RVecAB1wjoEM8byKFb0viWHmNinH0WG6srMsUCAj49FH7AeQtXPBvq0dLwglm/qRdlssr57379w3PJqCmQLoene+qsVIX1GuIfPQ55SHbwuwUah31G2u/fDQdqP8Iyef3apfjN3+TAo4a5bpzeLLts2gYi+ZAiE1+3P09wTGQlmWsmwXAWIsRLhT4rUyOmCOwX2uteYQ/phkTMjngdMfJzq4ljLMrKucOniiZsuND4f/izeeSdXKc9S/pxiR4NiCvQa4VgCS8Ol8r2lYaWKBYTP8C6EZXzxstS2yRYNESkos/vhlbY7kzQsPUdqWMXYMjYgxtSUlWzeIoHbkH2QkPMSMgMbCqsiXDA5Q4ynyGmFLYVZXJ+QXc7jEOLE07A4q+NgK2+QFjGg7KqLbDONVFthnGFIi0hDNcwX2c2hKeU6w6xTexz1CeNgdHP4VHzmNMXQaYb443XIuWGcuO27edAcQ0gTjC3BXbGQW80FOLVVLI/BVoLmcyNMJjIj0SHlDENjOjiYs0qIzliQSpDskWjAKKV6+r+maL5VOgi047zbv1V0OeR2edbxRQ0NDFP8Z3rH1QvKeBtNgJIKX8vPoBsYtTcNrl7KaCdMG/oArFwwKYalDOyEC831Tf0/QRhzCVQztQMp5cGUtf00uykk52AQhMH3YV42r/ZC8FJI/RFImmy5HP4Lf9GuNegY37MJGr90g8c592o0OHoPzRgocL1/WhljVZPEsbbRdpDUQWO1v+gLkK0v6Ey6qvOcYl41gXvmNHKYvMFA2mJ739LKBIbi+Fx2SzC8iSrdpPVgT8YDkKIwzXIvYAoL/0s0lxTHaMAHblm4oVpFBo5Y4YrNNkLAlb/GI6EIi5YYyUj32Y0Vwpg6AI7/qckEml0+MDw/dOkoyoblIYmYDbPbvbz0sia56Yo8IFxq6ApE9D2zDayOT1oVn9I+0CNkUC8wBltMfbo4b9BIwsMq43wpeuXL1IVbMOifAJZkNX6915zRgtqrcKMqnZ/LFfNWaTjADGAENa7mkAnJyZuSPjAcU3N8MwSjD2ylE30G9n+3Y05ZA94hX0AnCz7A4lo8Ap3JbYVG+Sl943GVpYqSNiy7+s8WUUwbaKCJbXAZQnChbfMr6IKuwWaY0M61hZaS/YmMPTf3U2Oz0Fk5jpdqYr/hEzOmXKl9RrJIwy/zDTRyVvpdxGCCAPiax3oIMQ36gt5ybAncJw9tXiDLop9bRJqW/A+6//C08Ig3EtfZAXFOk9q+tFrirLedFyp3xKcdYCC5oi+9XyCXCcN/IDRMtfeMz8bbbGyj8xVjpet4A+cyKZX+8K45gHdnrduSmM3kDmH0UYTE/Bd5+1CGaqqep13OyBq6+6NRgn9P66b2N7rC12g7Qur2YjOIhB1/Y/+xQv/yX8NxMF0ADbN3dLK/11aRklTSxlv8rD1ACxPIWUKm1EGgzgAY/hnjFjOQFizBupSSuvqQRm51TwDTnnL+1Jc5cTGPEMIQH5X4JKw9ecyBOMsGEbmyIns4SQbvloJtjHSWGVFQr/XDWVqW+PEGGu1XRoezMEDcwNO2LnjX89XaeyyMyusOYGJP6CKNpbGhmstY8KhetUg9Nd2365lLGrkXfxQCZ0gD6T3KITE65jFJs5Y6yn6AlzciLpPECCpgPT2zOlYQa8TxcOlDy83g26RM0OhB+fS6COAJiAGygyFJvrQzCZ80KNgjzoQw/Vjre7c9am6CRzkVRu9eWM9j/xbKz/2mUW2PNzbfhIQxq37fgpyc6BSqbObs85tXuF/0ANqEM/SMxeNbkz5tbHX/I2uLz8u8HqZYjCAj+LqmsnOu7E51fAwbAiZHLqSQK0R5GADEFLcEgAFdUQPOmgcYrQlDRtINbzyXmpQSSe33nboJg75ZJbAr3qCjYIYLcaQ4KJMBCB2YlS5eokrTAwfMP48lyxC+PXML96X3+ipCymCMz77D4/8Op1mk+N4F66bIIvQeByesrFkfmA4K2S9ioAycgUp93lfnDfE7Fbow+r0dCmtwyCXHfU1EvJwi1tcQNP/GeoYSfW28TTUIfNXGqjakpUqJkqaKrQUONlCjXGFDUXCHJ3ShD24N2VaWq4EuuCKPf7K1T43Nuvoc5KUGFZidZIAAATVRGwBVzd5Mjxe2tD3j9CWiu8/b4uHceQpAs61TwAt5M06STnRVYUxGtM4v1vmfjfKz4+RVduNFxLk5ZjQ1hWq2MIHTf4L8oQCzRCx2oYysnlfNRjYA1Q0xRfgyKbNqNY0d5eT5chRJrfN9YWB0yDNvAAAgEZABdNimWAMOPA8Z5cxv7OQajewAHvCe18jsgw46oefl1ure6wAA";
+const FKEY = "d8nam91r01qvvn94vsugd8nam91r01qvvn94vsv0";
+const APP_VERSION = "2.0 PRO";
+
+/* ── Design Tokens ── */
+const T = {
+  bg:"#03070D", s0:"#060C16", s1:"#09111E", s2:"#0D1826",
+  b0:"#14202F", b1:"#1B2D42", b2:"#223852",
+  gold:"#C9A84C", goldL:"#E8C96A", goldD:"#1E1608",
+  gGold:"linear-gradient(135deg,#C9A84C,#E8C96A)",
+  green:"#0DBF7A", greenD:"#041E12",
+  red:"#E84545",  redD:"#1E0606",
+  blue:"#3D8EF0", blueD:"#071428",
+  orange:"#F0A030", orangeD:"#1E1005",
+  purple:"#9B6FE8", purpleD:"#120D24",
+  t0:"#F0F6FF", t1:"#C0D4EE", t2:"#6A8CAA", t3:"#364D63",
+};
+
+/* ── DB ── */
+const DB = {
+  async get(k) { try { const r=await window.storage.get(k); return r?JSON.parse(r.value):null; } catch { return null; } },
+  async set(k,v) { try { await window.storage.set(k,JSON.stringify(v)); } catch {} },
+};
+
+/* ── Utils ── */
+const fmtCap = v => "$"+Math.abs(v).toLocaleString("en",{maximumFractionDigits:0});
+const fmtPnl = v => (parseFloat(v)>=0?"+":"-")+"$"+Math.abs(parseFloat(v)).toFixed(0);
+const fmtVol = v => v>=1e6?(v/1e6).toFixed(1)+"M":v>=1e3?(v/1e3).toFixed(0)+"K":""+v;
+
+const REASONS = ["علم صاعد (Bull Flag)","اختراق مقاومة","ارتداد من VWAP","اختراق نطاق الافتتاح","خبر محرّك","قاع مزدوج","Top Gainer","Short Squeeze","سبب آخر"];
+const MOODS   = ["هادئ ✅","متحمس ⚡","قلق ⚠️","طماع 🔴","انتقامي 🚫"];
+const MISTAKES= ["خطأ في التنفيذ","دخلت مبكراً","دخلت متأخراً","تجاهلت Stop Loss","طمع — لم أغلق عند الهدف","انتقام من خسارة","تداولت بدون خطة","خرجت مبكراً من رابحة","حجم كبير جداً","تجاهلت قواعد Mutlak Capitals"];
+
+/* ════════════════════════════════════════
+   ONBOARDING — للمبتدئ والمحترف
+   ════════════════════════════════════════ */
+function Onboarding({onDone}) {
+  const [step,setStep] = useState(0);
+  const [mode,setMode] = useState("");
+  const [capital,setCapital] = useState("");
+  const [name,setName] = useState("");
+
+  const STEPS = [
+    {
+      id:"welcome",
+      content: (
+        <div style={{textAlign:"center"}}>
+          <img src={LOGO} alt="Mutlak Capitals" style={{width:"min(340px,75vw)",marginBottom:32,filter:`drop-shadow(0 0 40px ${T.gold}50)`}}/>
+          <div style={{fontWeight:900,fontSize:22,color:T.gold,marginBottom:10}}>مرحباً بك في Mutlak Capitals</div>
+          <div style={{color:T.t2,fontSize:14,lineHeight:1.85,maxWidth:400,margin:"0 auto 28px"}}>
+            أداة التداول الاحترافية المبنية على نظام Mutlak Capitals<br/>
+            <span style={{color:T.t3,fontSize:12}}></span>
+          </div>
+          <div style={{display:"flex",gap:14,justifyContent:"center",flexWrap:"wrap"}}>
+            <button onClick={()=>{setMode("beginner");setStep(1);}} style={{padding:"14px 28px",borderRadius:12,background:T.gGold,color:"#060B14",border:"none",cursor:"pointer",fontWeight:900,fontSize:15,boxShadow:`0 6px 28px ${T.gold}40`}}>
+              🌱 مبتدئ — أتعلم التداول
+            </button>
+            <button onClick={()=>{setMode("pro");setStep(1);}} style={{padding:"14px 28px",borderRadius:12,background:"transparent",color:T.gold,border:`2px solid ${T.gold}`,cursor:"pointer",fontWeight:900,fontSize:15,transition:"all .2s"}}
+              onMouseEnter={e=>{e.currentTarget.style.background=T.goldD;}}
+              onMouseLeave={e=>{e.currentTarget.style.background="transparent";}}>
+              🚀 محترف — جاهز للتداول
+            </button>
+          </div>
+        </div>
+      )
+    },
+    {
+      id:"name",
+      content: (
+        <div style={{textAlign:"center",maxWidth:420,margin:"0 auto"}}>
+          <div style={{fontSize:48,marginBottom:16}}>👋</div>
+          <div style={{fontWeight:800,fontSize:20,color:T.gold,marginBottom:8}}>ما اسمك؟</div>
+          <div style={{color:T.t2,fontSize:13,marginBottom:24}}>حتى نخصص التجربة لك</div>
+          <input placeholder="اسمك هنا..." value={name} onChange={e=>setName(e.target.value)}
+            style={{width:"100%",background:T.s1,border:`2px solid ${T.b1}`,borderRadius:12,padding:"14px 18px",color:T.t0,fontSize:16,outline:"none",textAlign:"center",fontFamily:"inherit",marginBottom:16}}
+            onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.b1}
+            onKeyDown={e=>e.key==="Enter"&&name.trim()&&setStep(2)}/>
+          <button onClick={()=>name.trim()&&setStep(2)} disabled={!name.trim()}
+            style={{width:"100%",padding:"13px",borderRadius:11,background:name.trim()?T.gGold:"transparent",color:name.trim()?"#060B14":T.t2,border:`2px solid ${name.trim()?T.gold:T.b1}`,cursor:name.trim()?"pointer":"not-allowed",fontWeight:900,fontSize:15,transition:"all .2s"}}>
+            التالي →
+          </button>
+        </div>
+      )
+    },
+    {
+      id:"capital",
+      content: (
+        <div style={{textAlign:"center",maxWidth:420,margin:"0 auto"}}>
+          <div style={{fontSize:48,marginBottom:16}}>💼</div>
+          <div style={{fontWeight:800,fontSize:20,color:T.gold,marginBottom:8}}>{"مرحباً "+name+"! كم رأس مالك؟"}</div>
+          <div style={{color:T.t2,fontSize:13,marginBottom:8,lineHeight:1.7}}>
+            {mode==="beginner"
+              ? "لا تقلق إن كان صغيراً — كل رحلة تبدأ بخطوة أولى"
+              : "البرنامج سيحسب حجم كل صفقة بناءً على رأس مالك"
+            }
+          </div>
+          <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",marginBottom:16}}>
+            {["500","1000","5000","10000"].map(v=>(
+              <button key={v} onClick={()=>setCapital(v)} style={{padding:"8px 16px",borderRadius:99,border:`1.5px solid ${capital===v?T.gold:T.b1}`,background:capital===v?T.goldD:"transparent",color:capital===v?T.gold:T.t2,cursor:"pointer",fontWeight:700,fontSize:13,fontFamily:"monospace",transition:"all .2s"}}>
+                {"$"+parseInt(v).toLocaleString()}
+              </button>
+            ))}
+          </div>
+          <div style={{display:"flex",gap:10,marginBottom:16}}>
+            <input type="number" placeholder="أو أدخل رقم مخصص..." value={capital} onChange={e=>setCapital(e.target.value)}
+              style={{flex:1,background:T.s1,border:`2px solid ${T.b1}`,borderRadius:11,padding:"13px 16px",color:T.t0,fontSize:15,outline:"none",fontFamily:"monospace",textAlign:"center"}}
+              onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.b1}/>
+          </div>
+          {capital&&<div style={{background:T.goldD,border:`1px solid ${T.gold}40`,borderRadius:10,padding:"10px 16px",marginBottom:16,color:T.gold,fontSize:13}}>
+            {"أقصى خسارة لكل صفقة (1%): "}
+            <strong>{"$"+(parseFloat(capital)*0.01).toFixed(0)}</strong>
+            {" — هذه قاعدة Mutlak Capitals الذهبية"}
+          </div>}
+          <button onClick={()=>capital&&setStep(3)} disabled={!capital}
+            style={{width:"100%",padding:"13px",borderRadius:11,background:capital?T.gGold:"transparent",color:capital?"#060B14":T.t2,border:`2px solid ${capital?T.gold:T.b1}`,cursor:capital?"pointer":"not-allowed",fontWeight:900,fontSize:15,transition:"all .2s"}}>
+            التالي →
+          </button>
+        </div>
+      )
+    },
+    {
+      id: mode==="beginner" ? "learn" : "ready",
+      content: mode==="beginner" ? (
+        <div style={{maxWidth:460,margin:"0 auto"}}>
+          <div style={{textAlign:"center",marginBottom:24}}>
+            <div style={{fontSize:44,marginBottom:10}}>📚</div>
+            <div style={{fontWeight:800,fontSize:19,color:T.gold,marginBottom:6}}>أهم 3 قواعد تحتاجها الآن</div>
+            <div style={{color:T.t2,fontSize:12.5}}>Mutlak Capitals يقول: اتقن هذه القواعد الثلاث أولاً</div>
+          </div>
+          {[
+            {n:"1",ic:"🛡️",c:T.blue,t:"لا تخاطر بأكثر من 1%",d:`رأس مالك ${"$"}{parseInt(capital||0).toLocaleString()} ← أقصى خسارة لكل صفقة ${"$"}{(parseFloat(capital||0)*0.01).toFixed(0)} فقط`},
+            {n:"2",ic:"⚖️",c:T.gold,t:"نسبة الربح للخسارة 2:1",d:"هدفك دائماً ضعف مخاطرتك. إذا توقف خسارتك $50 فهدفك $100"},
+            {n:"3",ic:"⏰",c:T.green,t:"تداول فقط 9:30-11:30 صباحاً",d:"هذا أقوى وقت. Mutlak Capitals يغلق الجهاز بعد ساعتين ويذهب للتمارين"},
+          ].map((r,i)=>(
+            <div key={i} style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:13,padding:"15px 18px",marginBottom:10,borderRight:`4px solid ${r.c}`,display:"flex",gap:12}}>
+              <div style={{width:28,height:28,borderRadius:"50%",background:r.c+"20",border:`1px solid ${r.c}50`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>{r.ic}</div>
+              <div><div style={{fontWeight:700,fontSize:13.5,marginBottom:4}}>{r.t}</div><div style={{color:T.t2,fontSize:12,lineHeight:1.65}}>{r.d}</div></div>
+            </div>
+          ))}
+          <button onClick={()=>setStep(4)} style={{width:"100%",padding:"13px",borderRadius:11,background:T.gGold,color:"#060B14",border:"none",cursor:"pointer",fontWeight:900,fontSize:15,marginTop:8,boxShadow:`0 5px 22px ${T.gold}35`}}>
+            فهمت! ابدأ التداول 🚀
+          </button>
+        </div>
+      ) : (
+        <div style={{textAlign:"center",maxWidth:420,margin:"0 auto"}}>
+          <div style={{fontSize:52,marginBottom:16}}>⚡</div>
+          <div style={{fontWeight:900,fontSize:22,color:T.gold,marginBottom:10}}>{"أهلاً "+name+"، أنت جاهز!"}</div>
+          <div style={{color:T.t2,fontSize:13.5,lineHeight:1.85,marginBottom:28}}>
+            كل أدواتك جاهزة — السكنر التلقائي،<br/>
+            تسجيل الصفقات، التحليل المتقدم، والذكاء الاصطناعي
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:24,textAlign:"right"}}>
+            {["🔍 سكنر Mutlak Capitals التلقائي","📊 لوحة رأس المال","📐 إحصاء Expectancy & PF","🤖 تحليل ذكاء اصطناعي"].map((f,i)=>(
+              <div key={i} style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:10,padding:"11px 14px",fontSize:12.5,color:T.t1,display:"flex",alignItems:"center",gap:8}}>
+                <span style={{color:T.green,fontSize:11}}>✓</span>{f}
+              </div>
+            ))}
+          </div>
+          <button onClick={()=>onDone(mode,capital,name)} style={{width:"100%",padding:"14px",borderRadius:11,background:T.gGold,color:"#060B14",border:"none",cursor:"pointer",fontWeight:900,fontSize:16,boxShadow:`0 6px 28px ${T.gold}40`}}>
+            ابدأ الآن 🚀
+          </button>
+        </div>
+      )
+    },
+  ];
+
+  return (
+    <div style={{minHeight:"100vh",background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20,direction:"rtl",fontFamily:"'Segoe UI','Cairo',system-ui,sans-serif"}}>
+      <style>{`
+        @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+        @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+      `}</style>
+      {/* Gold top bar */}
+      <div style={{position:"fixed",top:0,left:0,right:0,height:2,background:T.gGold,backgroundSize:"200% 100%",animation:"shimmer 3s linear infinite"}}/>
+
+      {/* Progress dots */}
+      {step > 0 && (
+        <div style={{position:"fixed",top:20,display:"flex",gap:8}}>
+          {[1,2,3,4].map(i=>(
+            <div key={i} style={{width:i<=step?24:8,height:8,borderRadius:99,background:i<=step?T.gold:T.b1,transition:"all .3s"}}/>
+          ))}
+        </div>
+      )}
+
+      {/* Back button */}
+      {step > 0 && (
+        <button onClick={()=>setStep(p=>p-1)} style={{position:"fixed",top:14,right:20,background:"none",border:"none",color:T.t2,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",gap:5}}>
+          → رجوع
+        </button>
+      )}
+
+      <div style={{width:"100%",maxWidth:520,animation:"fadeUp .4s ease"}}>
+        {step < STEPS.length ? STEPS[step].content : null}
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   SPLASH
+   ════════════════════════════════════════ */
+function Splash({onDone}) {
+  const [ph,setPh]=useState(0);
+  useEffect(()=>{
+    const t=[setTimeout(()=>setPh(1),200),setTimeout(()=>setPh(2),900),setTimeout(()=>setPh(3),1700),setTimeout(()=>setPh(4),3200),setTimeout(()=>onDone(),4000)];
+    return ()=>t.forEach(clearTimeout);
+  },[]);
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:9999,background:T.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",overflow:"hidden",opacity:ph===4?0:1,transition:ph===4?"opacity .8s":""}}>
+      <style>{`
+        @keyframes p0{0%{transform:translateY(0)}100%{transform:translateY(-16px)}}
+        @keyframes p1{0%{transform:translateY(0)}100%{transform:translateY(-24px)}}
+        @keyframes barIn{from{width:0}to{width:100%}}
+        @keyframes glow{0%,100%{filter:drop-shadow(0 0 24px #C9A84C40)}50%{filter:drop-shadow(0 0 60px #C9A84C80)}}
+        @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+      `}</style>
+      {[{top:0},{bottom:0}].map((p,i)=>(
+        <div key={i} style={{position:"absolute",...p,left:0,right:0,height:2,background:`linear-gradient(90deg,transparent,${T.gold},${T.goldL},${T.gold},transparent)`,opacity:ph>=2?1:0,transition:`opacity .7s ${i*.15}s`}}/>
+      ))}
+      {[["top","left"],["top","right"],["bottom","left"],["bottom","right"]].map(([v,h],i)=>(
+        <div key={i} style={{position:"absolute",[v]:16,[h]:16,width:40,height:40,borderTop:v==="top"?`2px solid ${T.gold}`:"none",borderBottom:v==="bottom"?`2px solid ${T.gold}`:"none",borderLeft:h==="left"?`2px solid ${T.gold}`:"none",borderRight:h==="right"?`2px solid ${T.gold}`:"none",opacity:ph>=2?1:0,transition:`opacity .5s ${.3+i*.07}s`}}/>
+      ))}
+      {Array.from({length:18}).map((_,i)=>(
+        <div key={i} style={{position:"absolute",left:(5+i*5)+"%",top:(12+(i%5)*16)+"%",width:i%4===0?3:1.5,height:i%4===0?3:1.5,borderRadius:"50%",background:T.gold,opacity:ph>=2?(.06+i%4*.07):0,transition:`opacity .4s ${.4+i*.03}s`,animation:ph>=2?`p${i%2} ${2.5+i%3}s ease-in-out infinite alternate`:""}}/>
+      ))}
+      <div style={{opacity:ph>=1?1:0,transform:ph>=1?"scale(1)":"scale(.55) translateY(40px)",transition:"opacity .9s cubic-bezier(.2,.8,.3,1),transform .9s cubic-bezier(.2,.8,.3,1)",marginBottom:40,animation:ph>=1?"glow 2.5s ease-in-out infinite":""}}>
+        <img src={LOGO} alt="Mutlak Capitals" style={{width:"min(500px,80vw)",display:"block"}}/>
+      </div>
+      <div style={{width:"min(280px,64vw)",opacity:ph>=2?1:0,transition:"opacity .5s",display:"flex",flexDirection:"column",gap:10,alignItems:"center"}}>
+        <div style={{width:"100%",height:2,background:T.b1,borderRadius:99,overflow:"hidden"}}>
+          {ph>=3?<div style={{height:"100%",background:T.gGold,borderRadius:99,boxShadow:`0 0 12px ${T.gold}`,animation:"barIn 1.3s cubic-bezier(.4,0,.2,1) forwards"}}/>:<div style={{height:"100%",width:"12%",background:T.gold,borderRadius:99}}/>}
+        </div>
+        <div style={{color:T.gold,fontSize:10.5,fontFamily:"monospace",letterSpacing:4,opacity:.6}}>{ph>=3?"READY":"LOADING..."}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   CHARTS
+   ════════════════════════════════════════ */
+function CapChart({trades,initial}) {
+  if (!trades.length) return (
+    <div style={{height:175,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:8,color:T.t2,fontSize:13,border:`1px dashed ${T.b1}`,borderRadius:12}}>
+      <span style={{fontSize:28,opacity:.35}}>📈</span><span>أضف صفقات لرؤية منحنى رأس المال</span>
+    </div>
+  );
+  const pts=[{x:0,y:initial}]; let c=initial;
+  [...trades].reverse().forEach((t,i)=>{c+=parseFloat(t.pnl||0);pts.push({x:i+1,y:c});});
+  const mn=Math.min(...pts.map(p=>p.y)),mx=Math.max(...pts.map(p=>p.y));
+  const rng=mx-mn||1,W=700,H=175,PX=60,PY=12;
+  const cx=x=>PX+(x/(pts.length-1||1))*(W-PX-8);
+  const cy=y=>PY+(1-(y-mn)/rng)*(H-PY-22);
+  const path=pts.map((p,i)=>(i?"L":"M")+cx(p.x).toFixed(1)+","+cy(p.y).toFixed(1)).join(" ");
+  const area=path+` L${cx(pts.length-1).toFixed(1)},${H-18} L${cx(0).toFixed(1)},${H-18} Z`;
+  const col=c>=initial?T.green:T.red;
+  const fv=v=>Math.abs(v)>=1000?"$"+(Math.abs(v)/1000).toFixed(1)+"K":"$"+Math.abs(v).toFixed(0);
+  return (
+    <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{display:"block"}}>
+      <defs>
+        <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={col} stopOpacity=".25"/><stop offset="100%" stopColor={col} stopOpacity="0"/></linearGradient>
+        <filter id="gl"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      {[0,.25,.5,.75,1].map((t,i)=>{const y=PY+t*(H-PY-22),v=mx-t*rng;return <g key={i}><line x1={PX} y1={y} x2={W-6} y2={y} stroke={T.b1} strokeWidth=".6" strokeDasharray="3 9"/><text x={PX-5} y={y+4} textAnchor="end" fill={T.t3} fontSize="9" fontFamily="monospace">{fv(v)}</text></g>;})}
+      <line x1={PX} y1={cy(initial)} x2={W-6} y2={cy(initial)} stroke={T.gold} strokeWidth="1" strokeDasharray="4 5" opacity=".4"/>
+      <path d={area} fill="url(#ag)"/>
+      <path d={path} fill="none" stroke={col} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" filter="url(#gl)"/>
+      <circle cx={cx(0)} cy={cy(pts[0].y)} r="4.5" fill={T.gold} opacity=".9"/>
+      {pts.length>1&&<><circle cx={cx(pts.length-1)} cy={cy(pts.at(-1).y)} r="5.5" fill={col} filter="url(#gl)"/><text x={cx(pts.length-1)+9} y={cy(pts.at(-1).y)+4} fill={col} fontSize="11.5" fontFamily="monospace" fontWeight="700">{fv(c)}</text></>}
+    </svg>
+  );
+}
+
+function DDChart({trades,initial}) {
+  if (trades.length<2) return <div style={{height:85,display:"flex",alignItems:"center",justifyContent:"center",color:T.t2,fontSize:12}}>أضف صفقتين على الأقل</div>;
+  let peak=initial,cap=initial;
+  const pts=[{x:0,y:0}];
+  [...trades].reverse().forEach((t,i)=>{cap+=parseFloat(t.pnl||0);if(cap>peak)peak=cap;pts.push({x:i+1,y:peak>0?(peak-cap)/peak*100:0});});
+  const maxDD=Math.max(...pts.map(p=>p.y),1);
+  const W=700,H=95,PX=36,PY=6;
+  const cx=x=>PX+(x/(pts.length-1||1))*(W-PX-8);
+  const cy=y=>PY+(y/maxDD)*(H-PY-16);
+  const path=pts.map((p,i)=>(i?"L":"M")+cx(p.x).toFixed(1)+","+cy(p.y).toFixed(1)).join(" ");
+  const area=path+` L${cx(pts.length-1).toFixed(1)},${H-12} L${cx(0).toFixed(1)},${H-12} Z`;
+  return (
+    <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{display:"block"}}>
+      <defs><linearGradient id="ddg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={T.red} stopOpacity=".35"/><stop offset="100%" stopColor={T.red} stopOpacity="0"/></linearGradient></defs>
+      {[0,50,100].map((t,i)=>{const y=PY+(t/100)*(H-PY-16);return <g key={i}><line x1={PX} y1={y} x2={W-6} y2={y} stroke={T.b1} strokeWidth=".5" strokeDasharray="2 8"/><text x={PX-3} y={y+3} textAnchor="end" fill={T.t3} fontSize="8" fontFamily="monospace">{(t*maxDD/100).toFixed(1)+"%"}</text></g>;})}
+      <path d={area} fill="url(#ddg)"/>
+      <path d={path} fill="none" stroke={T.red} strokeWidth="1.8" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+
+
+/* ════════════════════════════════════════
+   ROSS SCANNER — تلقائي 100% بدون CORS
+   يستخدم Finnhub فقط (لا Yahoo Finance)
+   لأن Yahoo يمنع الطلبات من المتصفح
+   ════════════════════════════════════════ */
+function RossScanner() {
+  const [stocks,   setStocks]   = useState([]);
+  const [scanning, setScanning] = useState(false);
+  const [lastScan, setLastScan] = useState(null);
+  const [cd,       setCd]       = useState(30);
+  const [phase,    setPhase]    = useState("idle");
+  const [filter,   setFilter]   = useState("all");
+  const [error,    setError]    = useState("");
+  const timerRef = useRef(null);
+  const cdRef    = useRef(null);
+  const abortRef = useRef(false);
+
+  /* ═══ قواعد Mutlak Capitals الصارمة ═══ */
+  const ROSS = { minP:1, maxP:20, sweetMin:2, sweetMax:10, minChg:5, minVol:500000 };
+
+  /* أسهم Mutlak Capitals المفضلة — صغيرة، متقلبة، تاريخ تحركات قوية */
+  const WATCH = [
+    "MARA","RIOT","COIN","SOUN","RGTI","QUBT","IONQ","BBAI",
+    "PLTR","SMCI","RIVN","LCID","NIO","SOFI","HOOD","UPST",
+    "AFRM","SPCE","RKLB","ASTS","ACHR","JOBY","MULN","FFIE",
+    "GME","AMC","CLOV","WKHS","MVIS","ATER","BLNK","CHPT",
+    "OCGN","SRNE","BNGO","KPLT","TLRY","SNDL","NVDA","AMD",
+    "TSLA","F","PYPL","SQ","NKLA","GOEV","IDEX","NAKD",
+  ];
+
+  const calcScore = s => {
+    let sc = 0;
+    const p=s.price||0, chg=s.pct||0, vol=s.vol||0;
+    if (p>=ROSS.sweetMin && p<=ROSS.sweetMax) sc += 30;
+    else if (p>=ROSS.minP && p<=ROSS.maxP)    sc += 15;
+    if      (chg>=30) sc += 30;
+    else if (chg>=20) sc += 25;
+    else if (chg>=10) sc += 20;
+    else if (chg>=5)  sc += 10;
+    if      (vol>=5000000)    sc += 25;
+    else if (vol>=2000000)    sc += 20;
+    else if (vol>=ROSS.minVol)sc += 10;
+    if (s.news) sc += 15;
+    return Math.min(sc, 100);
+  };
+
+  const sig = sc => {
+    if (sc>=70) return {t:"🚀 إشارة قوية",  c:T.green,  bg:T.greenD};
+    if (sc>=50) return {t:"⚡ إشارة جيدة",  c:T.gold,   bg:T.goldD};
+    if (sc>=30) return {t:"👀 راقبه",        c:T.orange, bg:T.orangeD};
+    return           {t:"😴 ضعيف",         c:T.t2,     bg:T.s2};
+  };
+
+  const isGolden = () => {
+    // وقت السوق الأمريكي 9:30-11:30 EST محوّل لتوقيت العميل تلقائياً
+    const nowUTC = new Date();
+    // EST = UTC-5 في الشتاء، UTC-4 في الصيف (EDT)
+    const estOffset = isDST(nowUTC) ? -4 : -5;
+    const estTime = new Date(nowUTC.getTime() + estOffset * 60 * 60 * 1000);
+    const estH = estTime.getUTCHours();
+    const estM = estTime.getUTCMinutes();
+    const estMins = estH * 60 + estM;
+    return estMins >= 570 && estMins <= 690; // 9:30 - 11:30 EST
+  };
+
+  const isDST = (date) => {
+    const jan = new Date(date.getFullYear(), 0, 1);
+    const jul = new Date(date.getFullYear(), 6, 1);
+    return date.getTimezoneOffset() < Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+  };
+
+  const getLocalMarketTime = () => {
+    const nowUTC = new Date();
+    const estOffset = isDST(nowUTC) ? -4 : -5;
+    const estTime = new Date(nowUTC.getTime() + estOffset * 60 * 60 * 1000);
+    const estH = estTime.getUTCHours();
+    const estM = estTime.getUTCMinutes();
+    // تحويل لتوقيت العميل المحلي
+    const localTime = new Date();
+    const localH = localTime.getHours();
+    const localM = localTime.getMinutes();
+    const pad = n => String(n).padStart(2,'0');
+    return {
+      est:   pad(estH)+":"+pad(estM)+" EST",
+      local: pad(localH)+":"+pad(localM)+" (توقيتك)",
+      isOpen: estH >= 9 && (estH < 16 || (estH === 16 && estM === 0)),
+    };
+  };
+
+  /* ═══════════════════════════════════════════
+     المسح الرئيسي
+     ١. جلب أسعار كل الأسهم من Finnhub دفعة دفعة
+     ٢. فلترة بقواعد Mutlak Capitals الصارمة
+     ٣. جلب أخبار للأسهم المؤهلة
+     ٤. اختيار أفضل 4 بالنقاط
+     ═══════════════════════════════════════════ */
+  const runScan = useCallback(async () => {
+    if (scanning) return;
+    setScanning(true); setError(""); abortRef.current = false;
+    setPhase("fetching");
+
+    try {
+      const results = [];
+      const BATCH = 6; // دفعات لتجنب تجاوز الحد المجاني
+
+      for (let i=0; i<WATCH.length; i+=BATCH) {
+        if (abortRef.current) break;
+        const batch = WATCH.slice(i, i+BATCH);
+
+        const batchData = await Promise.all(batch.map(async sym => {
+          try {
+            const r = await fetch(
+              `https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FKEY}`
+            );
+            if (!r.ok) return null;
+            const q = await r.json();
+            if (!q.c || q.c === 0 || q.c === null) return null;
+            return {
+              symbol: sym,
+              price:  parseFloat(q.c)  || 0,
+              pct:    parseFloat(q.dp) || 0,
+              change: parseFloat(q.d)  || 0,
+              high:   parseFloat(q.h)  || 0,
+              low:    parseFloat(q.l)  || 0,
+              open:   parseFloat(q.o)  || 0,
+              prev:   parseFloat(q.pc) || 0,
+              vol:    0, // Finnhub مجاني لا يعطي volume في quote
+            };
+          } catch { return null; }
+        }));
+
+        // فلترة بقواعد Mutlak Capitals فوراً
+        const valid = batchData.filter(s =>
+          s &&
+          s.price >= ROSS.minP  &&
+          s.price <= ROSS.maxP  &&
+          s.pct   >= ROSS.minChg
+        );
+        results.push(...valid);
+
+        // تأخير بين الدفعات لتجنب rate limit
+        if (i + BATCH < WATCH.length) {
+          await new Promise(r => setTimeout(r, 300));
+        }
+      }
+
+      if (abortRef.current) { setScanning(false); return; }
+
+      // ترتيب مبدئي وأخذ أفضل 10 لجلب الأخبار
+      setPhase("filtering");
+      const scored = results
+        .map(s => ({...s, score: calcScore(s)}))
+        .sort((a,b) => b.score - a.score)
+        .slice(0, 10);
+
+      // جلب الأخبار للأفضل 10
+      if (scored.length > 0 && !abortRef.current) {
+        const withNews = await Promise.all(scored.map(async s => {
+          try {
+            const today = new Date().toISOString().split("T")[0];
+            // نجرب آخر 3 أيام لضمان ظهور الأخبار
+            const from3 = new Date(Date.now() - 7*24*60*60*1000).toISOString().split("T")[0];
+            const r = await fetch(
+              `https://finnhub.io/api/v1/company-news?symbol=${s.symbol}&from=${from3}&to=${today}&token=${FKEY}`
+            );
+            const nd = await r.json();
+            const hasNews = Array.isArray(nd) && nd.length > 0;
+            // أحدث خبر
+            const newsItem = hasNews ? nd[0] : null;
+            const finalScore = calcScore({...s, news: hasNews});
+            return {...s, news: hasNews, newsItem, score: finalScore};
+          } catch {
+            return s;
+          }
+        }));
+
+        // الترتيب النهائي واختيار أفضل 4
+        const final = withNews
+          .sort((a,b) => b.score - a.score)
+          .slice(0, 4);
+
+        setStocks(final);
+      } else {
+        setStocks(scored.slice(0,4));
+      }
+
+    } catch (e) {
+      setError("خطأ في الاتصال بـ Finnhub. سيعيد المحاولة تلقائياً...");
+      setStocks([]);
+    }
+
+    setPhase("done");
+    setLastScan(new Date());
+    setScanning(false);
+  }, [scanning]);
+
+  /* ═══ تشغيل تلقائي فور فتح التبويب ═══ */
+  useEffect(() => {
+    // بدء فوري بدون انتظار
+    const startTimer = setTimeout(() => runScan(), 500);
+
+    // تحديث كل 30 ثانية
+    timerRef.current = setInterval(() => {
+      setCd(30);
+      runScan();
+    }, 30000);
+
+    // عداد تنازلي
+    cdRef.current = setInterval(() => {
+      setCd(p => p <= 1 ? 30 : p - 1);
+    }, 1000);
+
+    return () => {
+      clearTimeout(startTimer);
+      clearInterval(timerRef.current);
+      clearInterval(cdRef.current);
+      abortRef.current = true;
+    };
+  }, []); // يعمل مرة واحدة عند فتح التبويب
+
+  const filtered = stocks.filter(s => {
+    if (filter==="strong") return s.score >= 70;
+    if (filter==="good")   return s.score >= 50 && s.score < 70;
+    if (filter==="news")   return s.news;
+    if (filter==="golden") return s.price >= 2 && s.price <= 10;
+    return true;
+  });
+
+  const fmtVol = v =>
+    v >= 1e6 ? (v/1e6).toFixed(1)+"M" :
+    v >= 1e3 ? (v/1e3).toFixed(0)+"K" : v ? String(v) : "—";
+
+  const phaseText = {
+    fetching:  "جارٍ جلب بيانات "+WATCH.length+" سهم من Finnhub...",
+    filtering: "جارٍ تطبيق قواعد Mutlak Capitals وجلب الأخبار...",
+    done:      "",
+    idle:      "جارٍ التحضير...",
+  };
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:14}}>
+
+      {/* ══ Header ══ */}
+      <div style={{background:`linear-gradient(135deg,${T.goldD},${T.s0})`,border:`1px solid ${T.gold}30`,borderRadius:16,padding:"18px 20px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:12}}>
+          <div>
+            <div style={{fontWeight:800,fontSize:14,color:T.gold,marginBottom:4}}>
+              🔍 سكنر Mutlak Capitals — تلقائي 100%
+            </div>
+            <div style={{color:T.t2,fontSize:11.5,lineHeight:1.75}}>
+              يفحص {WATCH.length} سهم بقواعد Mutlak Capitals الصارمة · Finnhub API
+              <br/>
+              <span style={{color:T.t3,fontSize:10.5}}>سعر $1-$20 · تغيير +5%+ · يتحدث كل 30 ثانية</span>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:9,alignItems:"center",flexWrap:"wrap"}}>
+            {/* Golden Hour */}
+            <div style={{background:isGolden()?T.greenD:T.redD,border:`1px solid ${isGolden()?T.green:T.red}50`,borderRadius:99,padding:"5px 12px",display:"flex",alignItems:"center",gap:6}}>
+              <div style={{width:7,height:7,borderRadius:"50%",background:isGolden()?T.green:T.red,animation:"pulse 1.5s infinite"}}/>
+              <span style={{fontSize:11,fontWeight:700,color:isGolden()?T.green:T.red}}>
+                {(()=>{
+                const nowUTC=new Date();
+                const jan=new Date(nowUTC.getFullYear(),0,1);
+                const jul=new Date(nowUTC.getFullYear(),6,1);
+                const dst=nowUTC.getTimezoneOffset()<Math.max(jan.getTimezoneOffset(),jul.getTimezoneOffset());
+                const estOff=dst?-4:-5;
+                const estMs=nowUTC.getTime()+estOff*3600000;
+                const estD=new Date(estMs);
+                const em=estD.getUTCHours()*60+estD.getUTCMinutes();
+                const open=em>=570&&em<=690;
+                // حساب 9:30 و 11:30 EST بتوقيت العميل
+                const localOff=-nowUTC.getTimezoneOffset()/60;
+                const diff=localOff-estOff;
+                const s1h=9+diff,s1m=30,s2h=11+diff,s2m=30;
+                const pad=n=>String(Math.floor(n)).padStart(2,"0");
+                const local930=pad(s1h)+":"+pad(s1m);
+                const local1130=pad(s2h)+":"+pad(s2m);
+                return open
+                  ?"🟢 ساعة ذهبية · "+local930+"-"+local1130+" (توقيتك)"
+                  :"🔴 خارج وقت التداول · يفتح "+local930+" (توقيتك)";
+              })()}
+              </span>
+            </div>
+            {/* Countdown */}
+            <div style={{background:T.s1,borderRadius:10,padding:"5px 13px",border:`1px solid ${T.b0}`,textAlign:"center",minWidth:68}}>
+              {scanning ? (
+                <div style={{color:T.gold,fontSize:10.5,fontFamily:"monospace",letterSpacing:1}}>
+                  {phase==="fetching"?"جلب...":phase==="filtering"?"فلترة...":"جارٍ..."}
+                </div>
+              ) : (
+                <>
+                  <div style={{fontFamily:"monospace",fontWeight:900,fontSize:18,color:cd<=10?T.orange:T.gold,lineHeight:1}}>{cd}s</div>
+                  <div style={{color:T.t3,fontSize:9,marginTop:1}}>تحديث تلقائي</div>
+                </>
+              )}
+            </div>
+            {/* Manual refresh */}
+            <button onClick={()=>!scanning&&runScan()} disabled={scanning}
+              style={{padding:"7px 14px",borderRadius:9,background:scanning?"transparent":T.gGold,color:scanning?T.gold:"#060B14",border:`1.5px solid ${T.gold}`,cursor:scanning?"not-allowed":"pointer",fontWeight:800,fontSize:12,opacity:scanning?.7:1,transition:"all .2s"}}>
+              {scanning?"⏳":"🔍 مسح"}
+            </button>
+          </div>
+        </div>
+
+        {/* Auto indicator */}
+        <div style={{marginTop:11,display:"flex",alignItems:"center",gap:8}}>
+          <div style={{width:7,height:7,borderRadius:"50%",background:T.green,animation:"pulse 2s infinite"}}/>
+          <span style={{fontSize:11.5,color:T.green,fontWeight:600}}>يعمل تلقائياً بدون أي تدخل</span>
+          {lastScan&&<span style={{fontSize:10,color:T.t3,marginRight:"auto"}}>{"آخر تحديث: "+lastScan.toLocaleTimeString("ar-SA")}</span>}
+        </div>
+
+        {/* Progress bar */}
+        <div style={{marginTop:9,background:T.b0,borderRadius:99,height:3,overflow:"hidden"}}>
+          <div style={{
+            height:"100%",background:T.gGold,borderRadius:99,
+            width: scanning ? "100%" : ((30-cd)/30*100)+"%",
+            transition: scanning?"none":"width 1s linear",
+            backgroundSize:"200% 100%",
+            animation: scanning?"shimmer 1.5s linear infinite":"none",
+          }}/>
+        </div>
+      </div>
+
+      {/* ══ Filters ══ */}
+      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+        {[["all","الكل"],["strong","🚀 قوي 70+"],["good","⚡ جيد 50+"],["news","📰 أخبار"],["golden","💛 $2-$10"]].map(([v,l])=>(
+          <button key={v} onClick={()=>setFilter(v)}
+            style={{padding:"7px 13px",borderRadius:99,border:"none",cursor:"pointer",fontWeight:700,fontSize:11.5,
+              background:filter===v?T.gGold:T.s1,color:filter===v?"#060B14":T.t2,
+              transition:"all .2s",boxShadow:filter===v?`0 3px 12px ${T.gold}35`:"none"}}>
+            {l}
+          </button>
+        ))}
+      </div>
+
+      {/* ══ Error ══ */}
+      {error&&(
+        <div style={{background:T.redD,border:`1px solid ${T.red}40`,borderRadius:11,padding:"11px 15px",color:T.red,fontSize:12.5,display:"flex",gap:8,alignItems:"center"}}>
+          <span>⚠️</span><span>{error}</span>
+        </div>
+      )}
+
+      {/* ══ Loading ══ */}
+      {scanning && stocks.length===0 && (
+        <div style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:14,padding:"40px 20px",textAlign:"center"}}>
+          <div style={{fontSize:34,marginBottom:11,animation:"pulse 1.2s infinite",display:"inline-block"}}>🔍</div>
+          <div style={{fontWeight:700,fontSize:13.5,color:T.gold,marginBottom:5}}>{phaseText[phase]}</div>
+          <div style={{color:T.t2,fontSize:12,lineHeight:1.7}}>
+            يفحص الأسهم التي تطابق قواعد Mutlak Capitals
+          </div>
+          {/* Mini progress */}
+          <div style={{marginTop:16,background:T.b0,borderRadius:99,height:4,overflow:"hidden",maxWidth:200,margin:"16px auto 0"}}>
+            <div style={{height:"100%",background:T.gGold,borderRadius:99,animation:"shimmer 1.5s linear infinite",backgroundSize:"200% 100%",width:"60%"}}/>
+          </div>
+        </div>
+      )}
+
+      {/* ══ No Results ══ */}
+      {!scanning && stocks.length===0 && phase==="done" && (
+        <div style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:14,padding:"42px 20px",textAlign:"center"}}>
+          <div style={{fontSize:36,marginBottom:11,opacity:.4}}>📉</div>
+          <div style={{fontWeight:700,fontSize:14,color:T.gold,marginBottom:6}}>لا توجد أسهم تطابق قواعد Mutlak Capitals الآن</div>
+          <div style={{color:T.t2,fontSize:12.5,lineHeight:1.8}}>
+            السوق لا يوفر أسهم بتغيير +5%+ وسعر $1-$20 حالياً<br/>
+            <span style={{color:T.t3,fontSize:11}}>سيعيد البحث تلقائياً بعد <strong style={{color:T.gold}}>{cd}</strong> ثانية</span>
+          </div>
+        </div>
+      )}
+
+      {/* ══ Results ══ */}
+      {filtered.length > 0 && (
+        <>
+          <div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:6}}>
+            <div style={{fontSize:12,color:T.t2}}>
+              أفضل <strong style={{color:T.gold}}>{filtered.length}</strong> سهم يطابق قواعد Mutlak Capitals الآن
+            </div>
+            <div style={{fontSize:10.5,color:T.t3}}>⚠️ Finnhub مجاني: بيانات قد تكون بتأخير بسيط</div>
+          </div>
+
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            {filtered.map((s, idx) => {
+              const sg = sig(s.score);
+              const golden = s.price >= 2 && s.price <= 10;
+              const change24h = s.change >= 0;
+
+              return (
+                <div key={s.symbol}
+                  style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:15,padding:"17px 19px",
+                    borderRight:`4px solid ${sg.c}`,transition:"all .2s",position:"relative"}}
+                  onMouseEnter={e=>e.currentTarget.style.borderColor=T.b1}
+                  onMouseLeave={e=>e.currentTarget.style.borderColor=T.b0}>
+
+                  {/* Rank */}
+                  <div style={{position:"absolute",top:13,left:14,width:24,height:24,borderRadius:"50%",
+                    background:idx===0?T.gGold:T.s2,
+                    border:`1px solid ${idx===0?T.gold:T.b1}`,
+                    display:"flex",alignItems:"center",justifyContent:"center",
+                    fontSize:11,fontWeight:900,color:idx===0?"#060B14":T.t2}}>
+                    {idx+1}
+                  </div>
+
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:12,paddingRight:30}}>
+                    {/* Left: Info */}
+                    <div>
+                      <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:6}}>
+                        <span style={{fontFamily:"monospace",fontWeight:900,fontSize:19,color:T.gold}}>{s.symbol}</span>
+                        {golden && <span style={{fontSize:9.5,padding:"2px 7px",borderRadius:99,background:T.goldD,color:T.gold,fontWeight:700}}>💛 نطاق Mutlak Capitals</span>}
+                        {s.news  && <span style={{fontSize:9.5,padding:"2px 7px",borderRadius:99,background:T.blueD,color:T.blue,fontWeight:700}}>📰 أخبار</span>}
+                      </div>
+                      <div style={{display:"flex",gap:14,alignItems:"center",flexWrap:"wrap"}}>
+                        <span style={{fontFamily:"monospace",fontWeight:900,fontSize:19,color:T.t0}}>{"$"+s.price.toFixed(2)}</span>
+                        <span style={{fontFamily:"monospace",fontWeight:700,fontSize:16,color:change24h?T.green:T.red}}>
+                          {change24h?"+":""}{s.pct.toFixed(2)+"%"}
+                        </span>
+                        <span style={{fontSize:11.5,color:change24h?T.green:T.red,fontFamily:"monospace"}}>
+                          {change24h?"+":""}{s.change.toFixed(2)}
+                        </span>
+                      </div>
+                      <div style={{fontSize:10.5,color:T.t3,marginTop:4}}>
+                        {"أعلى $"+s.high.toFixed(2)+" · أدنى $"+s.low.toFixed(2)+" · أمس $"+s.prev.toFixed(2)}
+                      </div>
+                    </div>
+
+                    {/* Right: Score */}
+                    <div style={{display:"flex",gap:8,alignItems:"center"}}>
+                      <div style={{textAlign:"center",background:sg.bg,borderRadius:12,padding:"10px 16px",border:`1px solid ${sg.c}40`}}>
+                        <div style={{fontFamily:"monospace",fontWeight:900,fontSize:23,color:sg.c,lineHeight:1}}>{s.score}</div>
+                        <div style={{color:T.t2,fontSize:9,marginTop:2}}>نقاط Mutlak Capitals</div>
+                      </div>
+                      <div style={{background:sg.bg,border:`1px solid ${sg.c}40`,borderRadius:9,padding:"8px 11px",textAlign:"center"}}>
+                        <div style={{fontWeight:700,fontSize:11.5,color:sg.c}}>{sg.t}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Price bar */}
+                  {s.high > s.low && (
+                    <div style={{marginTop:12}}>
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                        <span style={{fontSize:9.5,color:T.t3}}>أدنى</span>
+                        <span style={{fontSize:9.5,color:T.t3}}>
+                          الموضع الحالي: {((s.price-s.low)/(s.high-s.low)*100).toFixed(0)}%
+                        </span>
+                        <span style={{fontSize:9.5,color:T.t3}}>أعلى</span>
+                      </div>
+                      <div style={{background:T.b0,borderRadius:99,height:4,position:"relative",overflow:"hidden"}}>
+                        <div style={{position:"absolute",left:0,height:"100%",
+                          width:((s.price-s.low)/(s.high-s.low)*100)+"%",
+                          background:T.gGold,borderRadius:99}}/>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Mutlak Capitals Criteria */}
+                  <div style={{marginTop:11,display:"flex",gap:5,flexWrap:"wrap"}}>
+                    {[
+                      {l:"$1-$20",  ok: s.price>=1 && s.price<=20},
+                      {l:"$2-$10",  ok: golden},
+                      {l:"+5%",    ok: s.pct>=5},
+                      {l:"+10%",   ok: s.pct>=10},
+                      {l:"+20%",   ok: s.pct>=20},
+                      {l:"+30%",   ok: s.pct>=30},
+                      {l:"أخبار",  ok: s.news},
+                    ].map((c,i) => (
+                      <span key={i} style={{fontSize:10,padding:"2px 7px",borderRadius:99,
+                        background:c.ok?T.greenD:T.s2,
+                        color:c.ok?T.green:T.t3,
+                        border:`1px solid ${c.ok?T.green+"40":T.b0}`,
+                        fontWeight:600}}>
+                        {c.ok?"✓":"✗"} {c.l}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* News */}
+                  {s.newsItem && (
+                    <div style={{marginTop:11,paddingTop:11,borderTop:`1px solid ${T.b0}40`}}>
+                      <div style={{fontSize:10,color:T.t3,marginBottom:4,fontWeight:600}}>
+                        {"📰 "+new Date(s.newsItem.datetime*1000).toLocaleDateString("ar-SA")}
+                      </div>
+                      <a href={s.newsItem.url} target="_blank" rel="noopener noreferrer"
+                        style={{fontSize:12,color:T.blue,lineHeight:1.6,textDecoration:"none",display:"block"}}
+                        onMouseEnter={e=>e.currentTarget.style.color=T.goldL}
+                        onMouseLeave={e=>e.currentTarget.style.color=T.blue}>
+                        {(s.newsItem.headline||"").substring(0,120)+((s.newsItem.headline||"").length>120?"...":"")}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {/* ══ Mutlak Capitals Rules ══ */}
+      <div style={{background:T.goldD,border:`1px solid ${T.gold}30`,borderRadius:11,padding:"12px 15px"}}>
+        <div style={{fontWeight:700,fontSize:12,color:T.gold,marginBottom:7}}>📋 قواعد Mutlak Capitals للدخول</div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:5}}>
+          {["تداول 9:30-11:30 EST (يُحسب تلقائياً لتوقيتك)","Stop Loss إلزامي قبل الدخول","RR 2:1 كحد أدنى","لا تخاطر بأكثر من 1%","3 خسائر = توقف فوري"].map((r,i)=>(
+            <div key={i} style={{display:"flex",gap:5}}><span style={{color:T.gold,fontSize:11}}>✓</span><span style={{fontSize:11,color:T.t1,lineHeight:1.5}}>{r}</span></div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+/* ════════════════════════════════════════
+   TRADE FORM
+   ════════════════════════════════════════ */
+function TradeForm({onSave,onClose,edit,curCap,locked,mode}) {
+  const blank={date:new Date().toISOString().split("T")[0],ticker:"",entry:"",exit:"",shares:"",reason:"",notes:"",mood:"هادئ ✅",disc:true,mistakeType:""};
+  const [d,setD]=useState(edit||blank);
+  const [busy,setBusy]=useState(false);
+  const set=k=>e=>setD(p=>({...p,[k]:e.target.value}));
+  const pnl=useMemo(()=>{const e=parseFloat(d.entry),x=parseFloat(d.exit),s=parseInt(d.shares);return(!e||!x||!s)?null:((x-e)*s).toFixed(2);},[d.entry,d.exit,d.shares]);
+  const rr=useMemo(()=>{const e=parseFloat(d.entry),x=parseFloat(d.exit);return(!e||!x)?null:(Math.abs(x-e)/(e*.02)).toFixed(2);},[d.entry,d.exit]);
+  const newCap=pnl!=null?curCap+parseFloat(pnl):null;
+  const ok=d.ticker&&d.entry&&d.exit&&d.shares;
+  const isLoss=pnl!=null&&parseFloat(pnl)<0;
+  const IS={width:"100%",background:T.s0,border:`1.5px solid ${T.b1}`,borderRadius:9,padding:"10px 13px",color:T.t0,fontSize:13.5,outline:"none",fontFamily:"monospace",transition:"border-color .15s"};
+  const LB={display:"block",color:T.t2,fontSize:10,marginBottom:5,fontWeight:700,letterSpacing:.6,textTransform:"uppercase"};
+  const fo=e=>{e.target.style.borderColor=T.gold;e.target.style.boxShadow=`0 0 0 3px ${T.gold}12`;};
+  const bl=e=>{e.target.style.borderColor=T.b1;e.target.style.boxShadow="none";};
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(3,7,13,.96)",backdropFilter:"blur(12px)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:14,direction:"rtl"}}>
+      <div style={{background:T.s1,border:`1px solid ${T.b2}`,borderRadius:20,width:"100%",maxWidth:555,maxHeight:"96vh",overflowY:"auto",padding:"24px 26px",boxShadow:`0 32px 80px rgba(0,0,0,.7),0 0 0 1px ${T.gold}16`}}>
+        {locked&&!edit&&<div style={{background:T.redD,border:`1.5px solid ${T.red}50`,borderRadius:10,padding:"11px 15px",marginBottom:15,color:T.red,fontWeight:700,fontSize:13,textAlign:"center"}}>🔒 التداول مُقفل اليوم</div>}
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18,paddingBottom:13,borderBottom:`1px solid ${T.b1}`}}>
+          <div><div style={{fontWeight:900,fontSize:17,color:T.t0}}>{edit?"✏️ تعديل الصفقة":"➕ صفقة جديدة"}</div><div style={{color:T.t2,fontSize:11,marginTop:3}}>Mutlak Capitals · نظام Mutlak Capitals</div></div>
+          <button onClick={onClose} style={{background:T.b0,border:"none",borderRadius:9,width:32,height:32,color:T.t2,cursor:"pointer",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center"}} onMouseEnter={e=>{e.currentTarget.style.background=T.redD;e.currentTarget.style.color=T.red;}} onMouseLeave={e=>{e.currentTarget.style.background=T.b0;e.currentTarget.style.color=T.t2;}}>✕</button>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+          <div style={{background:T.s0,borderRadius:10,padding:"11px 14px",border:`1px solid ${T.b0}`}}><div style={{color:T.t2,fontSize:9.5,marginBottom:3,textTransform:"uppercase",letterSpacing:.5}}>رأس المال الحالي</div><div style={{fontFamily:"monospace",fontWeight:900,fontSize:17,color:T.gold}}>{fmtCap(curCap)}</div></div>
+          <div style={{background:newCap==null?T.s0:newCap>=curCap?T.greenD:T.redD,borderRadius:10,padding:"11px 14px",border:`1.5px solid ${newCap==null?T.b0:newCap>=curCap?T.green+"50":T.red+"50"}`,transition:"all .3s"}}><div style={{color:T.t2,fontSize:9.5,marginBottom:3,textTransform:"uppercase",letterSpacing:.5}}>رأس المال الجديد</div><div style={{fontFamily:"monospace",fontWeight:900,fontSize:17,color:newCap==null?T.t2:newCap>=curCap?T.green:T.red}}>{newCap==null?"—":fmtCap(newCap)}</div></div>
+        </div>
+        {mode==="beginner"&&<div style={{background:T.blueD,border:`1px solid ${T.blue}30`,borderRadius:10,padding:"10px 14px",marginBottom:15}}>
+          <div style={{color:T.blue,fontSize:12,fontWeight:700,marginBottom:4}}>💡 نصيحة للمبتدئ</div>
+          <div style={{color:T.t2,fontSize:11.5,lineHeight:1.7}}>أدخل سعر الدخول والخروج وعدد الأسهم — البرنامج يحسب ربحك وخسارتك تلقائياً</div>
+        </div>}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"0 14px"}}>
+          {[["📅 التاريخ","date","date",""],["📌 رمز السهم","ticker","text","AAPL"],["💵 سعر الدخول $","entry","number","5.20"],["🎯 سعر الخروج $","exit","number","6.80"],["📦 عدد الأسهم","shares","number","200"]].map(([l,k,t,p])=>(
+            <div key={k} style={{marginBottom:12}}><label style={LB}>{l}</label><input type={t} placeholder={p} value={d[k]||""} onChange={set(k)} style={IS} onFocus={fo} onBlur={bl}/></div>
+          ))}
+          <div style={{marginBottom:12,display:"flex",flexDirection:"column",justifyContent:"flex-end"}}>
+            <label style={LB}>💰 الربح / الخسارة</label>
+            <div style={{background:T.s0,border:`1.5px solid ${pnl==null?T.b1:parseFloat(pnl)>=0?T.green+"55":T.red+"55"}`,borderRadius:9,padding:"10px 13px",fontFamily:"monospace",fontWeight:900,fontSize:17,color:pnl==null?T.t2:parseFloat(pnl)>=0?T.green:T.red,textAlign:"center",transition:"all .3s"}}>
+              {pnl==null?"—":(parseFloat(pnl)>=0?"+":"-")+"$"+Math.abs(parseFloat(pnl)).toFixed(2)}
+            </div>
+          </div>
+        </div>
+        {rr&&<div style={{marginBottom:12,borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",background:parseFloat(rr)>=2?T.greenD:T.goldD,border:`1px solid ${parseFloat(rr)>=2?T.green+"45":T.gold+"45"}`}}>
+          <span style={{color:T.t1,fontSize:13}}>⚖️ نسبة RR</span>
+          <div style={{display:"flex",alignItems:"baseline",gap:7}}><span style={{fontFamily:"monospace",fontWeight:900,fontSize:19,color:parseFloat(rr)>=2?T.green:T.gold}}>{rr+":1"}</span><span style={{fontSize:10.5,color:parseFloat(rr)>=2?T.green:T.gold,opacity:.8}}>{parseFloat(rr)>=2?"✅ ممتاز":"⚠️ أقل من الحد"}</span></div>
+        </div>}
+        <div style={{marginBottom:12}}><label style={LB}>🚀 سبب الدخول</label>
+          <select value={d.reason||""} onChange={set("reason")} style={{...IS,appearance:"none",cursor:"pointer",color:d.reason?T.t0:T.t2}}><option value="">اختر...</option>{REASONS.map(o=><option key={o} value={o} style={{background:T.s1}}>{o}</option>)}</select>
+        </div>
+        <div style={{marginBottom:12}}><label style={LB}>🧠 الحالة النفسية</label>
+          <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{MOODS.map(m=><button key={m} onClick={()=>setD(p=>({...p,mood:m}))} style={{padding:"6px 12px",borderRadius:99,fontSize:11.5,cursor:"pointer",fontWeight:700,transition:"all .15s",background:d.mood===m?T.blue:"transparent",border:`1.5px solid ${d.mood===m?T.blue:T.b1}`,color:d.mood===m?"#fff":T.t2}}>{m}</button>)}</div>
+        </div>
+        <div style={{marginBottom:12}}><label style={LB}>📋 التزمت بقواعد Mutlak Capitals؟</label>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>{[[true,"✅ نعم"],[false,"❌ لا — خرجت عن الخطة"]].map(([v,l])=><button key={String(v)} onClick={()=>setD(p=>({...p,disc:v}))} style={{padding:"10px",borderRadius:9,fontSize:12,cursor:"pointer",fontWeight:700,transition:"all .15s",background:d.disc===v?(v?T.greenD:T.redD):"transparent",border:`1.5px solid ${d.disc===v?(v?T.green+"55":T.red+"55"):T.b1}`,color:d.disc===v?(v?T.green:T.red):T.t2}}>{l}</button>)}</div>
+        </div>
+        {isLoss&&<div style={{marginBottom:12}}><label style={LB}>❌ تصنيف الخطأ</label>
+          <select value={d.mistakeType||""} onChange={set("mistakeType")} style={{...IS,appearance:"none",cursor:"pointer",color:d.mistakeType?T.t0:T.t2,borderColor:T.red+"50"}}><option value="">لا يوجد خطأ واضح</option>{MISTAKES.map(o=><option key={o} value={o} style={{background:T.s1}}>{o}</option>)}</select>
+        </div>}
+        <div style={{marginBottom:20}}><label style={LB}>📝 ملاحظات</label>
+          <textarea value={d.notes||""} onChange={set("notes")} rows={3} placeholder="درس تعلمته..." style={{...IS,resize:"vertical",lineHeight:1.65}} onFocus={fo} onBlur={bl}/>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:10}}>
+          <button onClick={onClose} style={{padding:"12px",borderRadius:11,background:"none",border:`1.5px solid ${T.b1}`,color:T.t2,cursor:"pointer",fontWeight:700,fontSize:14}} onMouseEnter={e=>{e.currentTarget.style.borderColor=T.b2;e.currentTarget.style.color=T.t1;}} onMouseLeave={e=>{e.currentTarget.style.borderColor=T.b1;e.currentTarget.style.color=T.t2;}}>إلغاء</button>
+          <button disabled={!ok||busy} onClick={async()=>{if(!ok||busy)return;setBusy(true);await new Promise(r=>setTimeout(r,180));onSave({...d,pnl,rr,id:edit?.id||Date.now()});setBusy(false);}}
+            style={{padding:"12px",borderRadius:11,background:ok?T.gGold:"none",color:ok?"#060B14":T.t2,border:`1.5px solid ${ok?T.gold:T.b1}`,cursor:ok?"pointer":"not-allowed",fontWeight:900,fontSize:14.5,opacity:ok?1:.4,transition:"all .2s",boxShadow:ok?`0 5px 22px ${T.gold}35`:"none"}}>
+            {busy?"⏳ جارٍ الحفظ...":"💾 حفظ الصفقة"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════
+   RISK CALCULATOR COMPONENT
+   ════════════════════════════════════════ */
+function RiskCalc({curCap, userMode}) {
+  const [entryV,  setEntryV]  = useState("");
+  const [stopV,   setStopV]   = useState("");
+  const [targV,   setTargV]   = useState("");
+  const [riskPct, setRiskPct] = useState("1");
+
+  const calc = useMemo(()=>{
+    const e=parseFloat(entryV), s=parseFloat(stopV), r=parseFloat(riskPct)/100, t=parseFloat(targV);
+    if(!e||!s||r<=0||curCap<=0) return null;
+    const rp=Math.abs(e-s);
+    if(!rp) return null;
+    const ra=curCap*r, sh=Math.floor(ra/rp), ml=-(sh*rp);
+    const pr=(t&&t!==e)?(sh*Math.abs(t-e)):null;
+    const rv=pr!=null&&ra>0?(pr/ra).toFixed(2):null;
+    return{ra,rp,sh,ml,pr,rv};
+  },[entryV,stopV,riskPct,targV,curCap]);
+
+  const IS={width:"100%",background:"#060C16",border:"1.5px solid #1B2D42",borderRadius:9,padding:"11px 14px",color:"#F0F6FF",fontSize:15,outline:"none",fontFamily:"monospace",transition:"border-color .15s",WebkitAppearance:"none"};
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",gap:14}}>
+      {userMode==="beginner"&&(
+        <div style={{background:"#071428",border:"1px solid #3D8EF030",borderRadius:11,padding:"12px 15px",display:"flex",gap:10}}>
+          <span style={{fontSize:20}}>💡</span>
+          <div>
+            <div style={{color:"#3D8EF0",fontWeight:700,fontSize:12.5,marginBottom:3}}>للمبتدئ — كيف تستخدم هذه الأداة</div>
+            <div style={{color:"#6A8CAA",fontSize:12,lineHeight:1.7}}>أدخل سعر الدخول وسعر الـ Stop Loss، واختر نسبة المخاطرة — ستعرف كم سهم تشتري بالضبط</div>
+          </div>
+        </div>
+      )}
+      <div style={{background:"linear-gradient(135deg,#1E1608,#060C16)",border:"1px solid #C9A84C30",borderRadius:14,padding:"16px 19px"}}>
+        <div style={{fontWeight:800,fontSize:14,color:"#C9A84C",marginBottom:3}}>⚖️ حاسبة المخاطرة</div>
+        <div style={{color:"#6A8CAA",fontSize:11.5}}>يحسب عدد الأسهم المناسب بناءً على نسبة مخاطرتك من رأس مالك الحالي</div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+        <div>
+          <label style={{display:"block",color:"#6A8CAA",fontSize:10,marginBottom:6,fontWeight:700,textTransform:"uppercase",letterSpacing:.5}}>💵 سعر الدخول $</label>
+          <input type="number" inputMode="decimal" placeholder="5.20" value={entryV} onChange={e=>setEntryV(e.target.value)} style={IS}
+            onFocus={e=>{e.target.style.borderColor="#C9A84C";e.target.style.boxShadow="0 0 0 3px #C9A84C14";}}
+            onBlur={e=>{e.target.style.borderColor="#1B2D42";e.target.style.boxShadow="none";}}/>
+        </div>
+        <div>
+          <label style={{display:"block",color:"#6A8CAA",fontSize:10,marginBottom:6,fontWeight:700,textTransform:"uppercase",letterSpacing:.5}}>🛑 سعر Stop Loss $</label>
+          <input type="number" inputMode="decimal" placeholder="4.80" value={stopV} onChange={e=>setStopV(e.target.value)} style={IS}
+            onFocus={e=>{e.target.style.borderColor="#E84545";e.target.style.boxShadow="0 0 0 3px #E8454514";}}
+            onBlur={e=>{e.target.style.borderColor="#1B2D42";e.target.style.boxShadow="none";}}/>
+        </div>
+        <div>
+          <label style={{display:"block",color:"#6A8CAA",fontSize:10,marginBottom:6,fontWeight:700,textTransform:"uppercase",letterSpacing:.5}}>🎯 سعر الهدف $ (اختياري)</label>
+          <input type="number" inputMode="decimal" placeholder="6.00" value={targV} onChange={e=>setTargV(e.target.value)} style={IS}
+            onFocus={e=>{e.target.style.borderColor="#0DBF7A";e.target.style.boxShadow="0 0 0 3px #0DBF7A14";}}
+            onBlur={e=>{e.target.style.borderColor="#1B2D42";e.target.style.boxShadow="none";}}/>
+        </div>
+        <div>
+          <label style={{display:"block",color:"#6A8CAA",fontSize:10,marginBottom:6,fontWeight:700,textTransform:"uppercase",letterSpacing:.5}}>📊 نسبة المخاطرة %</label>
+          <div style={{display:"flex",gap:6}}>
+            {["0.5","1","1.5","2"].map(v=>(
+              <button key={v} onClick={()=>setRiskPct(v)}
+                style={{flex:1,padding:"11px 4px",borderRadius:8,border:`1.5px solid ${riskPct===v?"#C9A84C":"#1B2D42"}`,background:riskPct===v?"#1E1608":"transparent",color:riskPct===v?"#C9A84C":"#6A8CAA",cursor:"pointer",fontWeight:700,fontSize:13,fontFamily:"monospace",transition:"all .15s"}}>
+                {v+"%"}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {calc?(
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(145px,1fr))",gap:11}}>
+          {[
+            {l:"عدد الأسهم",     v:calc.sh.toLocaleString(),                  c:"#C9A84C", ic:"📦", big:true, hint:"اشتري هذا العدد بالضبط"},
+            {l:"أقصى خسارة",    v:"-$"+Math.abs(calc.ml).toFixed(0),          c:"#E84545", ic:"🛑", big:false,hint:"قيمة الـ Stop Loss"},
+            {l:"مقدار المخاطرة", v:"$"+calc.ra.toFixed(0),                    c:"#F0A030", ic:"⚠️", big:false,hint:riskPct+"% من رأس مالك"},
+            {l:"خطر لكل سهم",   v:"$"+calc.rp.toFixed(3),                    c:"#C0D4EE", ic:"📐", big:false,hint:"فرق الدخول والـ Stop"},
+            ...(calc.pr!=null?[{l:"الربح المتوقع",v:"+$"+calc.pr.toFixed(0),  c:"#0DBF7A", ic:"💰", big:false,hint:"إذا وصل للهدف"}]:[]),
+            ...(calc.rv!=null?[{l:"نسبة RR",v:calc.rv+":1",                   c:parseFloat(calc.rv)>=2?"#0DBF7A":"#F0A030",ic:"⚖️",big:false,hint:parseFloat(calc.rv)>=2?"✅ ممتاز":"⚠️ أقل من 2:1"}]:[]),
+          ].map((k,i)=>(
+            <div key={i} style={{background:k.big?"linear-gradient(135deg,#1E1608,#09111E)":"#09111E",border:`1.5px solid ${k.big?"#C9A84C60":"#14202F"}`,borderRadius:13,padding:"14px 16px",borderTop:`3px solid ${k.c}`,boxShadow:k.big?"0 4px 20px #C9A84C20":"none"}}>
+              <div style={{fontSize:20,marginBottom:8}}>{k.ic}</div>
+              <div style={{fontFamily:"monospace",fontWeight:900,fontSize:k.big?26:19,color:k.c,letterSpacing:-1}}>{k.v}</div>
+              <div style={{color:"#6A8CAA",fontSize:10.5,marginTop:5,fontWeight:600}}>{k.l}</div>
+              <div style={{color:"#364D63",fontSize:9.5,marginTop:2}}>{k.hint}</div>
+            </div>
+          ))}
+        </div>
+      ):(
+        <div style={{textAlign:"center",padding:"32px 20px",background:"#09111E",borderRadius:12,border:"1px dashed #1B2D42",color:"#6A8CAA",fontSize:13}}>
+          <div style={{fontSize:30,opacity:.35,marginBottom:8}}>⚖️</div>
+          <div>أدخل سعر الدخول وسعر الـ Stop Loss</div>
+          {entryV&&stopV&&Math.abs(parseFloat(entryV)-parseFloat(stopV))<0.001&&(
+            <div style={{color:"#F0A030",fontSize:12,marginTop:6}}>⚠️ سعر الدخول وStop Loss متساويان</div>
+          )}
+        </div>
+      )}
+
+      <div style={{background:"#071428",border:"1px solid #3D8EF030",borderRadius:10,padding:"12px 15px",display:"flex",gap:9}}>
+        <span style={{fontSize:17}}>💡</span>
+        <div>
+          <div style={{color:"#3D8EF0",fontWeight:700,fontSize:12,marginBottom:3}}>قاعدة Mutlak Capitals الذهبية</div>
+          <div style={{color:"#6A8CAA",fontSize:11.5,lineHeight:1.8}}>
+            {"رأس مالك "}<strong style={{color:"#C9A84C"}}>{fmtCap(curCap)}</strong>
+            {" ← أقصى خسارة لكل صفقة "}<strong style={{color:"#E84545"}}>{"$"+(curCap*0.01).toFixed(0)}</strong>{" (1%)"}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+/* ════════════════════════════════════════
+   MAIN APP
+   ════════════════════════════════════════ */
+export default function App() {
+  const [splash,setSplash]     = useState(true);
+  const [onboarded,setOnboarded] = useState(false);
+  const [ready,setReady]       = useState(false);
+  const [userMode,setUserMode] = useState("beginner");
+  const [userName,setUserName] = useState("");
+  const [tab,setTab]           = useState("dash");
+  const [trades,setTrades]     = useState([]);
+  const [initial,setInitial]   = useState(1000);
+  const [maxLoss,setMaxLoss]   = useState(200);
+  const [goals,setGoals]       = useState({monthly:0,weekly:0,yearly:0});
+  const [journals,setJournals] = useState({});
+  const [preps,setPreps]       = useState({});
+  const [form,setForm]         = useState(false);
+  const [editT,setEditT]       = useState(null);
+  const [detail,setDetail]     = useState(null);
+  const [toast,setToast]       = useState(null);
+  const [search,setSearch]     = useState("");
+  const [filt,setFilt]         = useState("الكل");
+  const [capEdit,setCapEdit]   = useState(false);
+  const [capDraft,setCapDraft] = useState("");
+  const [locked,setLocked]     = useState(false);
+  const [showCfg,setShowCfg]   = useState(false);
+  const [aiText,setAiText]     = useState("");
+  const [aiBusy,setAiBusy]     = useState(false);
+  const [aiErr,setAiErr]       = useState("");
+  const [repPeriod,setRepPeriod] = useState("monthly");
+  const [mg,setMg]             = useState("");
+  const [wg,setWg]             = useState("");
+  const [yg,setYg]             = useState("");
+  const [selWeek,setSelWeek]   = useState(0);
+  const [jContent,setJContent] = useState("");
+  const [jRating,setJRating]   = useState(3);
+  const [jSaved,setJSaved]     = useState(false);
+  const [re,setRe]             = useState("");
+  const [rs,setRs]             = useState("");
+  const [rr2,setRr2]           = useState("1");
+  const [rt,setRt]             = useState("");
+  const [prepChecked,setPrepChecked] = useState([]);
+  const [prepWl,setPrepWl]     = useState("");
+  const [prepCat,setPrepCat]   = useState("");
+  const [prepPlan,setPrepPlan] = useState("");
+  const [prepGoal,setPrepGoal] = useState("");
+  const [prepMood,setPrepMood] = useState("هادئ ✅");
+  const [prepDone,setPrepDone] = useState(false);
+
+  // Load DB
+  useEffect(()=>{
+    (async()=>{
+      const [t,cap,ml,g,j,p,ob,um,un]=await Promise.all([
+        DB.get("mc_t"),DB.get("mc_c"),DB.get("mc_ml"),DB.get("mc_g"),
+        DB.get("mc_j"),DB.get("mc_p"),DB.get("mc_ob"),DB.get("mc_um"),DB.get("mc_un")
+      ]);
+      if(t)setTrades(t); if(cap)setInitial(cap); if(ml)setMaxLoss(ml);
+      if(g){setGoals(g);setMg(String(g.monthly||""));setWg(String(g.weekly||""));setYg(String(g.yearly||""));}
+      if(j)setJournals(j); if(p)setPreps(p);
+      if(ob)setOnboarded(true);
+      if(um)setUserMode(um);
+      if(un)setUserName(un);
+      setReady(true);
+    })();
+  },[]);
+
+  useEffect(()=>{if(ready)DB.set("mc_t",trades);},[trades,ready]);
+  useEffect(()=>{if(ready)DB.set("mc_c",initial);},[initial,ready]);
+  useEffect(()=>{if(ready)DB.set("mc_ml",maxLoss);},[maxLoss,ready]);
+  useEffect(()=>{if(ready)DB.set("mc_g",goals);},[goals,ready]);
+  useEffect(()=>{if(ready)DB.set("mc_j",journals);},[journals,ready]);
+  useEffect(()=>{if(ready)DB.set("mc_p",preps);},[preps,ready]);
+
+  const handleOnboardingDone = useCallback(async({mode,capital,name})=>{
+    setUserMode(mode); setUserName(name); setInitial(parseFloat(capital)||1000);
+    setMaxLoss(parseFloat(capital)*0.025||200);
+    setOnboarded(true);
+    await Promise.all([DB.set("mc_ob",true),DB.set("mc_um",mode),DB.set("mc_un",name),DB.set("mc_c",parseFloat(capital)||1000)]);
+  },[]);
+
+  const notify=(msg,type="ok")=>{setToast({msg,type});setTimeout(()=>setToast(null),2800);};
+
+  const totalPnL=useMemo(()=>trades.reduce((s,t)=>s+parseFloat(t.pnl||0),0),[trades]);
+  const curCap=useMemo(()=>initial+totalPnL,[initial,totalPnL]);
+  const growth=initial?((curCap/initial-1)*100).toFixed(1):"0";
+
+  const stats=useMemo(()=>{
+    if(!trades.length)return null;
+    const W=trades.filter(t=>parseFloat(t.pnl||0)>0);
+    const L=trades.filter(t=>parseFloat(t.pnl||0)<0);
+    const wr=Math.round(W.length/trades.length*100);
+    const avgW=W.length?W.reduce((s,t)=>s+parseFloat(t.pnl),0)/W.length:0;
+    const avgL=L.length?Math.abs(L.reduce((s,t)=>s+parseFloat(t.pnl),0)/L.length):0;
+    const rr=avgL>0?(avgW/avgL).toFixed(2):"∞";
+    const disc=Math.round(trades.filter(t=>t.disc).length/trades.length*100);
+    let streak=0,cur=0;
+    [...trades].reverse().forEach(t=>{parseFloat(t.pnl||0)>0?(cur++,streak=Math.max(streak,cur)):cur=0;});
+    const gW=W.reduce((s,t)=>s+parseFloat(t.pnl),0);
+    const gL=Math.abs(L.reduce((s,t)=>s+parseFloat(t.pnl),0)||1);
+    const exp=(W.length/trades.length*avgW)-(L.length/trades.length*avgL);
+    const pf=gW/gL;
+    let peak=initial,cap=initial,maxDD=0;
+    [...trades].reverse().forEach(t=>{cap+=parseFloat(t.pnl||0);if(cap>peak)peak=cap;const dd=(peak-cap)/peak*100;if(dd>maxDD)maxDD=dd;});
+    const byDay={};const dn=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+    trades.forEach(t=>{const d=new Date(t.date).getDay(),n=dn[d];if(!byDay[n])byDay[n]={pnl:0,n:0};byDay[n].pnl+=parseFloat(t.pnl||0);byDay[n].n++;});
+    const byMistake={};
+    trades.filter(t=>t.mistakeType).forEach(t=>{if(!byMistake[t.mistakeType])byMistake[t.mistakeType]={n:0,loss:0};byMistake[t.mistakeType].n++;byMistake[t.mistakeType].loss+=Math.min(parseFloat(t.pnl||0),0);});
+    const bestT=W.length?W.reduce((m,t)=>parseFloat(t.pnl)>parseFloat(m.pnl)?t:m,W[0]):null;
+    const worstT=L.length?L.reduce((m,t)=>parseFloat(t.pnl)<parseFloat(m.pnl)?t:m,L[0]):null;
+    return{wr,avgW,avgL,rr,disc,streak,wins:W.length,losses:L.length,exp,pf,maxDD,byDay,byMistake,bestT,worstT};
+  },[trades,initial]);
+
+  const saveTrade=useCallback(d=>{
+    setTrades(p=>d.id&&p.find(t=>t.id===d.id)?p.map(t=>t.id===d.id?d:t):[{...d,id:Date.now()},...p]);
+    setForm(false);setEditT(null);
+    notify("✅ "+d.ticker+" — "+(parseFloat(d.pnl)>=0?"ربح":"خسارة")+" $"+Math.abs(parseFloat(d.pnl||0)).toFixed(0));
+  },[]);
+  const delTrade=useCallback(id=>{setTrades(p=>p.filter(t=>t.id!==id));setDetail(null);notify("🗑️ تم حذف الصفقة","warn");},[]);
+
+  const visible=useMemo(()=>trades.filter(t=>{
+    const ms=!search||t.ticker?.toUpperCase().includes(search.toUpperCase())||t.reason?.includes(search);
+    const mf=filt==="الكل"||(filt==="رابحة"&&parseFloat(t.pnl||0)>0)||(filt==="خاسرة"&&parseFloat(t.pnl||0)<0);
+    return ms&&mf;
+  }),[trades,search,filt]);
+
+  const today=new Date().toISOString().split("T")[0];
+  const todayTrades=useMemo(()=>trades.filter(t=>t.date===today),[trades,today]);
+  const todayPnL=useMemo(()=>todayTrades.reduce((s,t)=>s+parseFloat(t.pnl||0),0),[todayTrades]);
+  const todayLoss=todayTrades.filter(t=>parseFloat(t.pnl||0)<0).length;
+  const consec=useMemo(()=>{let c=0;for(const t of todayTrades){if(parseFloat(t.pnl||0)<0)c++;else c=0;}return c;},[todayTrades]);
+  useEffect(()=>setLocked(todayLoss>=3||todayPnL<=-maxLoss),[todayLoss,todayPnL,maxLoss]);
+
+  const grouped=useMemo(()=>{
+    const map={};trades.forEach(t=>{
+      const d=new Date(t.date);
+      const key=repPeriod==="monthly"?d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"):d.getFullYear()+"-W"+String(Math.ceil((d.getDate()+new Date(d.getFullYear(),d.getMonth(),1).getDay())/7)).padStart(2,"0");
+      if(!map[key])map[key]={pnl:0,cnt:0,wins:0};
+      map[key].pnl+=parseFloat(t.pnl||0);map[key].cnt++;
+      if(parseFloat(t.pnl||0)>0)map[key].wins++;
+    });
+    return Object.entries(map).sort((a,b)=>b[0].localeCompare(a[0]));
+  },[trades,repPeriod]);
+
+  const weeks2=useMemo(()=>{
+    const map={};trades.forEach(t=>{
+      const d=new Date(t.date),s2=new Date(d);s2.setDate(d.getDate()-d.getDay());
+      const k=s2.toISOString().split("T")[0];
+      if(!map[k])map[k]={trades:[],pnl:0,wins:0};
+      map[k].trades.push(t);map[k].pnl+=parseFloat(t.pnl||0);
+      if(parseFloat(t.pnl||0)>0)map[k].wins++;
+    });
+    return Object.entries(map).sort((a,b)=>b[0].localeCompare(a[0]));
+  },[trades]);
+
+  const rcalc=useMemo(()=>{
+    const e=parseFloat(re),s=parseFloat(rs),r=parseFloat(rr2)/100,t2=parseFloat(rt);
+    if(!e||!s||!r||!curCap)return null;
+    const ra=curCap*r,rp=Math.abs(e-s);if(!rp)return null;
+    const sh=Math.floor(ra/rp),ml=-(sh*rp),pr=t2?(sh*Math.abs(t2-e)):null,rv=pr!=null?(pr/ra).toFixed(2):null;
+    return{ra,rp,sh,ml,pr,rv};
+  },[re,rs,rr2,rt,curCap]);
+
+  const PREP_CHECKS=["سأتداول فقط بين 9:30 و 11:30","Stop Loss جاهز قبل الدخول","لن أخاطر بأكثر من 1% في صفقة","إذا خسرت 3 مرات متتالية سأتوقف","لن أتداول بعاطفة الانتقام"];
+
+  const now2=new Date();
+  const thisM=now2.getFullYear()+"-"+String(now2.getMonth()+1).padStart(2,"0");
+  const thisY=String(now2.getFullYear());
+  const mPnL=useMemo(()=>trades.filter(t=>t.date?.startsWith(thisM)).reduce((s,t)=>s+parseFloat(t.pnl||0),0),[trades,thisM]);
+  const yPnL=useMemo(()=>trades.filter(t=>t.date?.startsWith(thisY)).reduce((s,t)=>s+parseFloat(t.pnl||0),0),[trades,thisY]);
+
+  const TABS=[
+    {id:"dash",   i:"📊", n:"اللوحة"},
+    {id:"scanner",i:"🔍", n:"سكنر Mutlak Capitals"},
+    {id:"prep",   i:"🌅", n:"تجهيز اليوم"},
+    {id:"daily",  i:"📅", n:"اليوم"},
+    {id:"trades", i:"📋", n:"السجل"},
+    {id:"risk",   i:"⚖️", n:"المخاطرة"},
+    {id:"stats",  i:"📐", n:"إحصاء متقدم"},
+    {id:"analysis",i:"🧠",n:"التحليل"},
+    {id:"reports",i:"📈", n:"التقارير"},
+    {id:"goals",  i:"🎯", n:"الأهداف"},
+    {id:"review", i:"📋", n:"المراجعة"},
+    {id:"journal",i:"✍️", n:"اليومية"},
+    {id:"ai",     i:"🤖", n:"الذكاء الاصطناعي"},
+    {id:"rules",  i:"📜", n:"قواعد Mutlak Capitals"},
+  ];
+
+  // Onboarding wrapper
+  const handleOBDone = useCallback((data)=>{
+    handleOnboardingDone(data);
+  },[handleOnboardingDone]);
+
+  // Splash first
+  if(splash) return <Splash onDone={()=>setSplash(false)}/>;
+
+  // Onboarding for new users
+  if(!onboarded) {
+    return (
+      <Onboarding onDone={(mode,cap,name)=>handleOnboardingDone({mode,capital:cap,name})}/>
+    );
+  }
+
+  const IS2={width:"100%",background:T.s0,border:`1.5px solid ${T.b1}`,borderRadius:9,padding:"10px 13px",color:T.t0,fontSize:13.5,outline:"none",fontFamily:"monospace",transition:"border-color .15s"};
+  const fo2=e=>{e.target.style.borderColor=T.gold;};
+  const bl2=e=>{e.target.style.borderColor=T.b1;};
+
+  /* ── RENDER ── */
+  return (
+    <div style={{background:T.bg,minHeight:"100vh",color:T.t0,direction:"rtl",fontFamily:"'Segoe UI','Cairo',system-ui,sans-serif",display:"flex",flexDirection:"column"}}>
+      <style>{`
+        *{box-sizing:border-box;margin:0;padding:0}
+        ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:${T.s0}}::-webkit-scrollbar-thumb{background:${T.b1};border-radius:3px}
+        .nb{transition:all .15s;border-radius:4px 4px 0 0}.nb:hover{color:${T.goldL}!important;background:${T.s0}!important}
+        .at{color:${T.gold}!important;border-bottom-color:${T.gold}!important}
+        .ch:hover{border-color:${T.b1}!important;transform:translateY(-2px);transition:all .2s}
+        .rh:hover{border-color:${T.b1}!important;background:${T.s2}!important}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+        @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+        select option{background:${T.s1}}
+      `}</style>
+
+      {/* ════ HEADER ════ */}
+      <header style={{background:T.s0,borderBottom:`1px solid ${T.b0}`,position:"sticky",top:0,zIndex:100,backdropFilter:"blur(20px)"}}>
+        <div style={{height:2,background:T.gGold,backgroundSize:"200% 100%",animation:"shimmer 3s linear infinite"}}/>
+        {locked&&<div style={{background:T.red,color:"#fff",textAlign:"center",padding:"5px",fontSize:11.5,fontWeight:700}}>🔒 التداول مُقفل اليوم — وصلت للحد الأقصى</div>}
+        <div style={{maxWidth:1440,margin:"0 auto",padding:"0 16px",height:62,display:"flex",alignItems:"center",justifyContent:"space-between",gap:11}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,flexShrink:0}}>
+            <img src={LOGO} alt="Mutlak Capitals" style={{height:40,objectFit:"contain",filter:`drop-shadow(0 2px 10px ${T.gold}55)`}}/>
+            <div style={{width:1,height:28,background:`linear-gradient(${T.gold}80,transparent)`}}/>
+            <div>
+              <div style={{fontWeight:800,fontSize:11,color:T.gold,letterSpacing:2,textTransform:"uppercase"}}>{"Journal PRO · "+APP_VERSION}</div>
+              <div style={{color:T.t3,fontSize:9,marginTop:1.5}}>
+                {userName?"مرحباً "+userName+" 👋":"Mutlak Capitals · Mutlak Capitals System"}
+              </div>
+            </div>
+          </div>
+
+          {capEdit?(
+            <div style={{flex:1,display:"flex",justifyContent:"center",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+              <span style={{color:T.t2,fontSize:11.5}}>رأس المال</span>
+              <input type="number" value={capDraft} onChange={e=>setCapDraft(e.target.value)} autoFocus
+                onKeyDown={e=>e.key==="Enter"&&(setInitial(parseFloat(capDraft)||initial),setCapEdit(false))}
+                style={{width:110,background:T.s1,border:`1.5px solid ${T.gold}`,borderRadius:8,padding:"7px 11px",color:T.t0,fontSize:13.5,outline:"none",fontFamily:"monospace"}}/>
+              <button onClick={()=>{setInitial(parseFloat(capDraft)||initial);setCapEdit(false);}} style={{padding:"7px 13px",borderRadius:8,background:T.gGold,color:"#060B14",border:"none",cursor:"pointer",fontWeight:900,fontSize:12}}>✓</button>
+              <button onClick={()=>setCapEdit(false)} style={{padding:"7px 11px",borderRadius:8,background:"transparent",border:`1px solid ${T.b1}`,color:T.t2,cursor:"pointer",fontSize:12}}>✕</button>
+            </div>
+          ):(
+            <div style={{flex:1,display:"flex",justifyContent:"center"}}>
+              <div onClick={()=>{setCapDraft(String(initial));setCapEdit(true);}} style={{textAlign:"center",cursor:"pointer",padding:"6px 16px",borderRadius:11,border:`1px solid ${T.b0}`,background:T.s1,transition:"border-color .15s"}}
+                onMouseEnter={e=>e.currentTarget.style.borderColor=T.b1}
+                onMouseLeave={e=>e.currentTarget.style.borderColor=T.b0}>
+                <div style={{fontFamily:"monospace",fontWeight:900,fontSize:24,lineHeight:1,color:curCap>=initial?T.green:T.red,letterSpacing:-1}}>{fmtCap(curCap)}</div>
+                <div style={{display:"flex",gap:7,justifyContent:"center",alignItems:"center",marginTop:3,flexWrap:"wrap"}}>
+                  <span style={{fontSize:9.5,color:T.t3}}>رأس المال الجديد</span>
+                  <span style={{fontSize:10.5,color:totalPnL>=0?T.green:T.red,fontFamily:"monospace"}}>{fmtPnl(totalPnL)}</span>
+                  <span style={{fontSize:10,color:totalPnL>=0?T.green:T.red,fontWeight:700}}>{growth+"%"}</span>
+                  {stats&&<span style={{fontSize:8.5,color:T.t3}}>{"E:$"+stats.exp.toFixed(1)}</span>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div style={{display:"flex",gap:6,flexShrink:0}}>
+            <button onClick={()=>setShowCfg(p=>!p)} style={{padding:"7px 10px",borderRadius:9,background:showCfg?T.b1:T.s1,border:`1px solid ${T.b0}`,color:T.t1,cursor:"pointer",fontSize:13.5}}>⚙️</button>
+            <button onClick={()=>{setEditT(null);setForm(true);}} style={{padding:"8px 16px",borderRadius:9,background:T.gGold,color:"#060B14",border:"none",cursor:"pointer",fontWeight:900,fontSize:12.5,boxShadow:`0 4px 16px ${T.gold}35`}}>+ صفقة</button>
+          </div>
+        </div>
+
+        {/* Mode indicator for beginner */}
+        {userMode==="beginner"&&(
+          <div style={{background:T.blueD,borderBottom:`1px solid ${T.blue}20`,padding:"4px 16px",display:"flex",alignItems:"center",gap:8}}>
+            <span style={{fontSize:10.5,color:T.blue,fontWeight:600}}>🌱 وضع المبتدئ — ستجد تلميحات تعليمية في كل مكان</span>
+            <button onClick={()=>{setUserMode("pro");DB.set("mc_um","pro");}} style={{marginRight:"auto",fontSize:10,color:T.t2,background:"transparent",border:"none",cursor:"pointer",textDecoration:"underline"}}>التبديل لوضع المحترف</button>
+          </div>
+        )}
+
+        <nav style={{maxWidth:1440,margin:"0 auto",display:"flex",gap:0,padding:"0 10px",overflowX:"auto"}}>
+          {TABS.map(t=>(
+            <button key={t.id} onClick={()=>setTab(t.id)} className={"nb"+(tab===t.id?" at":"")}
+              style={{padding:"10px 12px",background:"none",border:"none",borderBottom:"2px solid transparent",color:T.t2,cursor:"pointer",fontWeight:600,fontSize:11,whiteSpace:"nowrap"}}>
+              {t.i+" "+t.n}
+            </button>
+          ))}
+        </nav>
+      </header>
+
+      {/* Settings bar */}
+      {showCfg&&(
+        <div style={{background:T.s1,borderBottom:`1px solid ${T.b0}`,padding:"14px 18px"}}>
+          <div style={{maxWidth:1440,margin:"0 auto",display:"flex",gap:12,flexWrap:"wrap",alignItems:"flex-end"}}>
+            <div style={{fontWeight:700,fontSize:13,color:T.gold,flexShrink:0}}>⚙️ الإعدادات</div>
+            {[["💼 رأس المال الابتدائي $",String(initial),v=>setInitial(parseFloat(v)||initial),T.gold],["🛑 حد الخسارة اليومي $",String(maxLoss),v=>setMaxLoss(parseFloat(v)||maxLoss),T.red]].map(([l,v,s,col])=>(
+              <div key={l} style={{flex:"1 1 190px"}}>
+                <label style={{display:"block",color:T.t2,fontSize:9.5,marginBottom:4,fontWeight:700,textTransform:"uppercase",letterSpacing:.5}}>{l}</label>
+                <input type="number" defaultValue={v} onBlur={e=>s(e.target.value)} style={{width:"100%",background:T.s2,border:`1.5px solid ${T.b1}`,borderRadius:8,padding:"8px 11px",color:T.t0,fontSize:13,outline:"none",fontFamily:"monospace"}} onFocus={e=>e.target.style.borderColor=col} onChange={e=>e.target.style.borderColor=col}/>
+              </div>
+            ))}
+            <div style={{color:T.t3,fontSize:11}}>حد الخسارة الموصى به: <strong style={{color:T.red}}>{"$"+(curCap*.025).toFixed(0)}</strong></div>
+            <button onClick={()=>setShowCfg(false)} style={{padding:"8px 14px",borderRadius:8,background:T.b0,border:"none",color:T.t2,cursor:"pointer",fontWeight:700,fontSize:12}}>إغلاق ✕</button>
+          </div>
+        </div>
+      )}
+
+      {/* ════ MAIN ════ */}
+      <main style={{flex:1,maxWidth:1440,width:"100%",margin:"0 auto",padding:"18px 14px",animation:"fadeUp .3s ease"}}>
+
+        {/* ── DASHBOARD ── */}
+        {tab==="dash"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:15}}>
+            {userMode==="beginner"&&!trades.length&&(
+              <div style={{background:T.blueD,border:`1px solid ${T.blue}30`,borderRadius:13,padding:"14px 18px",display:"flex",gap:12,alignItems:"flex-start"}}>
+                <span style={{fontSize:22}}>👋</span>
+                <div><div style={{fontWeight:700,fontSize:13,color:T.blue,marginBottom:4}}>{"مرحباً "+userName+"! ابدأ بتسجيل أول صفقة"}</div>
+                <div style={{color:T.t2,fontSize:12,lineHeight:1.7}}>اضغط "+ صفقة" في الأعلى لتسجيل صفقتك الأولى. البرنامج سيتابع رأس مالك تلقائياً.</div></div>
+              </div>
+            )}
+            {!trades.length?(
+              <div style={{textAlign:"center",padding:"70px 20px",background:`linear-gradient(145deg,${T.s1},${T.s2})`,borderRadius:20,border:`1px dashed ${T.b1}`}}>
+                <img src={LOGO} alt="" style={{height:62,opacity:.45,marginBottom:18,filter:`drop-shadow(0 0 20px ${T.gold})`}}/>
+                <div style={{fontWeight:900,fontSize:20,color:T.gold,marginBottom:10}}>ابدأ رحلتك مع Mutlak Capitals</div>
+                <p style={{color:T.t2,fontSize:13.5,lineHeight:1.85,maxWidth:360,margin:"0 auto 16px"}}>سجّل صفقاتك وتابع رأس مالك — البرنامج يحسب كل شيء تلقائياً</p>
+                <button onClick={()=>setForm(true)} style={{padding:"13px 36px",borderRadius:12,background:T.gGold,color:"#060B14",border:"none",cursor:"pointer",fontWeight:900,fontSize:15,boxShadow:`0 7px 28px ${T.gold}40`}}>➕ سجّل أول صفقة</button>
+              </div>
+            ):(
+              <>
+                <div style={{background:`linear-gradient(135deg,${T.goldD},${T.s0} 55%,${T.blueD})`,border:`1px solid ${T.gold}30`,borderRadius:20,padding:"21px 25px",position:"relative",overflow:"hidden"}}>
+                  <div style={{position:"absolute",top:-40,left:-40,width:240,height:240,background:`radial-gradient(circle,${T.gold}07,transparent 70%)`,pointerEvents:"none"}}/>
+                  <div style={{position:"relative",display:"grid",gridTemplateColumns:"auto 1fr",gap:20,alignItems:"center"}}>
+                    <div>
+                      <div style={{color:T.gold,fontSize:9.5,fontWeight:700,letterSpacing:2.5,marginBottom:7,textTransform:"uppercase",opacity:.75}}>رأس المال الجديد</div>
+                      <div style={{fontFamily:"monospace",fontWeight:900,fontSize:40,lineHeight:1,color:curCap>=initial?T.green:T.red,letterSpacing:-2}}>{fmtCap(curCap)}</div>
+                      <div style={{display:"flex",gap:12,marginTop:8,flexWrap:"wrap"}}>
+                        <span style={{fontSize:11,color:T.t2}}>الابتدائي: <span style={{color:T.gold,fontFamily:"monospace"}}>{fmtCap(initial)}</span></span>
+                        <span style={{fontSize:11,fontFamily:"monospace",color:totalPnL>=0?T.green:T.red}}>{fmtPnl(totalPnL)}</span>
+                        <span style={{fontSize:11,color:totalPnL>=0?T.green:T.red,fontWeight:700}}>{growth+"%"}</span>
+                      </div>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+                      {[
+                        {l:"معدل النجاح",v:stats.wr+"%",c:stats.wr>=65?T.green:stats.wr>=50?T.gold:T.red,s:"هدف 65%"},
+                        {l:"نسبة RR",v:stats.rr+":1",c:parseFloat(stats.rr)>=2?T.green:T.gold,s:"الحد 2:1"},
+                        {l:"Expectancy",v:"$"+stats.exp.toFixed(2),c:stats.exp>0?T.green:T.red,s:"ربح/دولار"},
+                        {l:"Profit Factor",v:stats.pf.toFixed(2)+"x",c:stats.pf>=1.5?T.green:T.orange,s:"الحد 1.5x"},
+                      ].map((k,i)=>(
+                        <div key={i} style={{background:"rgba(255,255,255,.04)",borderRadius:10,padding:"9px 11px",border:"1px solid rgba(255,255,255,.05)",textAlign:"center"}}>
+                          <div style={{fontFamily:"monospace",fontWeight:900,fontSize:16,color:k.c,lineHeight:1}}>{k.v}</div>
+                          <div style={{color:T.t2,fontSize:8.5,marginTop:3}}>{k.l}</div>
+                          <div style={{color:T.t3,fontSize:8,marginTop:1}}>{k.s}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:15,padding:"17px 19px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:13}}>
+                    <div><div style={{fontWeight:800,fontSize:13.5,color:T.gold}}>📈 منحنى رأس المال</div><div style={{color:T.t2,fontSize:10.5,marginTop:2}}>{trades.length+" صفقة مسجّلة"}</div></div>
+                    <span style={{fontFamily:"monospace",fontWeight:700,fontSize:12,color:totalPnL>=0?T.green:T.red,background:totalPnL>=0?T.greenD:T.redD,padding:"4px 11px",borderRadius:99,border:`1px solid ${totalPnL>=0?T.green:T.red}40`}}>{fmtPnl(totalPnL)}</span>
+                  </div>
+                  <CapChart trades={trades} initial={initial}/>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(142px,1fr))",gap:10}}>
+                  {[
+                    {l:"إجمالي الربح",v:"+$"+trades.filter(t=>parseFloat(t.pnl||0)>0).reduce((s,t)=>s+parseFloat(t.pnl),0).toFixed(0),c:T.green,ic:"💰",s:stats.wins+" رابحة"},
+                    {l:"إجمالي الخسارة",v:"-$"+Math.abs(trades.filter(t=>parseFloat(t.pnl||0)<0).reduce((s,t)=>s+parseFloat(t.pnl),0)).toFixed(0),c:T.red,ic:"📉",s:stats.losses+" خاسرة"},
+                    {l:"Expectancy",v:"$"+stats.exp.toFixed(2),c:stats.exp>0?T.green:T.red,ic:"🎯",s:"لكل دولار مخاطر"},
+                    {l:"Profit Factor",v:stats.pf.toFixed(2)+"x",c:stats.pf>=1.5?T.green:T.orange,ic:"⚖️",s:"الحد 1.5x"},
+                    {l:"أفضل صفقة",v:stats.bestT?"+$"+Math.abs(parseFloat(stats.bestT.pnl)).toFixed(0):"—",c:T.green,ic:"🏆",s:stats.bestT?.ticker||"—"},
+                    {l:"أسوأ صفقة",v:stats.worstT?"-$"+Math.abs(parseFloat(stats.worstT.pnl)).toFixed(0):"—",c:T.red,ic:"⚠️",s:stats.worstT?.ticker||"—"},
+                  ].map((k,i)=>(
+                    <div key={i} className="ch" style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:12,padding:"13px 14px",borderTop:`2px solid ${k.c}30`,transition:"all .2s",cursor:"default"}}>
+                      <div style={{fontSize:17,marginBottom:7}}>{k.ic}</div>
+                      <div style={{fontFamily:"monospace",fontWeight:900,fontSize:17,color:k.c,letterSpacing:-1}}>{k.v}</div>
+                      <div style={{color:T.t2,fontSize:10,marginTop:4,fontWeight:600}}>{k.l}</div>
+                      <div style={{color:T.t3,fontSize:9.5,marginTop:2}}>{k.s}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:14,padding:"15px 17px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
+                    <div style={{fontWeight:800,fontSize:13.5,color:T.gold}}>🕐 آخر الصفقات</div>
+                    <button onClick={()=>setTab("trades")} style={{background:"none",border:`1px solid ${T.b0}`,borderRadius:7,padding:"4px 11px",color:T.t2,cursor:"pointer",fontSize:11,transition:"all .2s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=T.gold;e.currentTarget.style.color=T.gold;}} onMouseLeave={e=>{e.currentTarget.style.borderColor=T.b0;e.currentTarget.style.color=T.t2;}}>عرض الكل ←</button>
+                  </div>
+                  {trades.slice(0,5).map(t=>{const p=parseFloat(t.pnl||0);return(
+                    <div key={t.id} onClick={()=>setDetail(t)} className="rh" style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 11px",borderRadius:9,cursor:"pointer",background:T.s2,border:`1px solid ${T.b0}`,marginBottom:5,transition:"all .18s",borderRight:`3px solid ${p>=0?T.green:T.red}`}}>
+                      <div style={{display:"flex",gap:10,alignItems:"center"}}><span style={{fontFamily:"monospace",fontWeight:900,fontSize:14,color:T.gold,minWidth:50}}>{t.ticker}</span><span style={{color:T.t2,fontSize:10.5}}>{t.date}</span>{t.mistakeType&&<span style={{fontSize:9.5,padding:"1px 6px",borderRadius:99,background:T.redD,color:T.red}}>{t.mistakeType.split(" ").slice(0,2).join(" ")}</span>}</div>
+                      <div style={{textAlign:"left"}}><div style={{fontFamily:"monospace",fontWeight:900,fontSize:13.5,color:p>=0?T.green:T.red}}>{fmtPnl(p)}</div>{t.rr&&<div style={{color:T.t3,fontSize:9}}>{"RR "+t.rr+":1"}</div>}</div>
+                    </div>
+                  );})}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {tab==="scanner"&&<RossScanner/>}
+
+        {/* ── PRE-MARKET ── */}
+        {tab==="prep"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:13}}>
+            <div style={{background:`linear-gradient(135deg,${T.goldD},${T.s0})`,border:`1px solid ${T.gold}30`,borderRadius:14,padding:"16px 19px"}}>
+              <div style={{fontWeight:800,fontSize:14,color:T.gold,marginBottom:3}}>🌅 تجهيز جلسة التداول</div>
+              <div style={{color:T.t2,fontSize:11.5}}>{today+" · "+ (()=>{
+            const nowUTC=new Date();
+            const jan=new Date(nowUTC.getFullYear(),0,1);
+            const jul=new Date(nowUTC.getFullYear(),6,1);
+            const dst=nowUTC.getTimezoneOffset()<Math.max(jan.getTimezoneOffset(),jul.getTimezoneOffset());
+            const estOff=dst?-4:-5;
+            const localOff=-nowUTC.getTimezoneOffset()/60;
+            const diff=localOff-estOff;
+            const h=Math.floor(9+diff);
+            const pad=n=>String(n).padStart(2,"0");
+            return "افتتاح السوق "+pad(h)+":30 توقيتك";
+          })()}</div>
+            </div>
+            {prepDone&&preps[today]?(
+              <div style={{background:T.greenD,border:`1px solid ${T.green}50`,borderRadius:12,padding:"17px 19px",textAlign:"center"}}>
+                <div style={{fontSize:28,marginBottom:6}}>✅</div>
+                <div style={{fontWeight:700,fontSize:14,color:T.green,marginBottom:3}}>جلسة اليوم جاهزة!</div>
+                <div style={{color:T.t2,fontSize:12}}>{"Watchlist: "+preps[today].watchlist.split("\n").filter(Boolean).length+" سهم · الهدف: $"+preps[today].goal}</div>
+                <button onClick={()=>setPrepDone(false)} style={{marginTop:10,padding:"7px 18px",borderRadius:8,background:"transparent",border:`1px solid ${T.green}`,color:T.green,cursor:"pointer",fontSize:12,fontWeight:700}}>تعديل</button>
+              </div>
+            ):(
+              <>
+                <div style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:12,padding:"14px 16px"}}>
+                  <div style={{fontWeight:700,fontSize:12.5,color:T.gold,marginBottom:10}}>✅ قائمة التحقق — قواعد Mutlak Capitals</div>
+                  {PREP_CHECKS.map((r,i)=>(
+                    <div key={i} onClick={()=>setPrepChecked(p=>p.includes(i)?p.filter(x=>x!==i):[...p,i])} style={{display:"flex",gap:10,alignItems:"center",padding:"7px 0",borderBottom:`1px solid ${T.b0}12`,cursor:"pointer"}}>
+                      <div style={{width:18,height:18,borderRadius:5,border:`1.5px solid ${prepChecked.includes(i)?T.green:T.b1}`,background:prepChecked.includes(i)?T.greenD:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all .15s"}}>{prepChecked.includes(i)&&<span style={{color:T.green,fontSize:11}}>✓</span>}</div>
+                      <span style={{fontSize:12.5,color:prepChecked.includes(i)?T.green:T.t1}}>{r}</span>
+                    </div>
+                  ))}
+                  {prepChecked.length===PREP_CHECKS.length&&<div style={{marginTop:8,color:T.green,fontSize:11.5,fontWeight:600,textAlign:"center"}}>🎯 ممتاز! أنت جاهز للتداول</div>}
+                </div>
+                <div style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:12,padding:"14px 16px"}}>
+                  <div style={{fontWeight:700,fontSize:12.5,color:T.gold,marginBottom:9}}>🧠 حالتك النفسية الآن</div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{MOODS.map(m=><button key={m} onClick={()=>setPrepMood(m)} style={{padding:"6px 12px",borderRadius:99,fontSize:11.5,cursor:"pointer",fontWeight:700,transition:"all .15s",background:prepMood===m?T.blue:"transparent",border:`1.5px solid ${prepMood===m?T.blue:T.b1}`,color:prepMood===m?"#fff":T.t2}}>{m}</button>)}</div>
+                  {(prepMood==="طماع 🔴"||prepMood==="انتقامي 🚫"||prepMood==="قلق ⚠️")&&<div style={{marginTop:9,background:T.redD,borderRadius:8,padding:"8px 12px",color:T.red,fontSize:12,fontWeight:600}}>⚠️ تحذير: حالتك النفسية غير مثالية للتداول اليوم.</div>}
+                </div>
+                {[["📋 Watchlist — الأسهم المرشحة",prepWl,setPrepWl,"AAPL - اختراق مقاومة\nTSLA - خبر إيجابي",4],["📰 المحفزات الإخبارية",prepCat,setPrepCat,"اكتب المحفزات...",3],["📝 خطة اليوم",prepPlan,setPrepPlan,"ما هو تركيزك؟ ما الذي ستتجنبه؟",3]].map(([lbl,val,setter,ph,rows])=>(
+                  <div key={lbl}>
+                    <label style={{display:"block",color:T.t2,fontSize:10,marginBottom:5,fontWeight:700,textTransform:"uppercase",letterSpacing:.5}}>{lbl}</label>
+                    <textarea value={val} onChange={e=>setter(e.target.value)} placeholder={ph} rows={rows} style={{width:"100%",background:T.s1,border:`1.5px solid ${T.b1}`,borderRadius:9,padding:"10px 13px",color:T.t0,fontSize:13,outline:"none",resize:"vertical",fontFamily:"inherit",lineHeight:1.65}} onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.b1}/>
+                  </div>
+                ))}
+                <div>
+                  <label style={{display:"block",color:T.t2,fontSize:10,marginBottom:5,fontWeight:700,textTransform:"uppercase",letterSpacing:.5}}>🎯 الهدف المالي للجلسة</label>
+                  <div style={{display:"flex",gap:8}}>
+                    <input type="number" placeholder="200" value={prepGoal} onChange={e=>setPrepGoal(e.target.value)} style={{flex:1,...IS2}} onFocus={fo2} onBlur={bl2}/>
+                    <div style={{background:T.goldD,border:`1px solid ${T.gold}40`,borderRadius:9,padding:"10px 15px",color:T.gold,fontFamily:"monospace",fontWeight:700,fontSize:13}}>{"$"+(prepGoal||"0")}</div>
+                  </div>
+                </div>
+                <button onClick={()=>{const p={watchlist:prepWl,catalysts:prepCat,plan:prepPlan,goal:prepGoal,mood:prepMood,date:today};setPreps(pr=>({...pr,[today]:p}));setPrepDone(true);}} style={{padding:"12px",borderRadius:11,background:T.gGold,color:"#060B14",border:"none",cursor:"pointer",fontWeight:900,fontSize:14,boxShadow:`0 5px 22px ${T.gold}35`}}>🚀 تأكيد — أنا جاهز للتداول</button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── DAILY TRACKER ── */}
+        {tab==="daily"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:13}}>
+            <div style={{background:locked?T.redD:todayPnL>0?T.greenD:T.s1,border:`1.5px solid ${locked?T.red:todayPnL>0?T.green:T.b1}`,borderRadius:15,padding:"19px 21px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:10}}>
+                <div>
+                  <div style={{color:T.t2,fontSize:10,fontWeight:700,letterSpacing:1.5,textTransform:"uppercase",marginBottom:6}}>أداء اليوم</div>
+                  <div style={{fontFamily:"monospace",fontWeight:900,fontSize:38,lineHeight:1,color:locked?T.red:todayPnL>=0?T.green:T.red,letterSpacing:-2}}>{(todayPnL>=0?"+":"-")+"$"+Math.abs(todayPnL).toFixed(0)}</div>
+                  <div style={{color:T.t2,fontSize:11.5,marginTop:6}}>{todayTrades.length+" صفقة · "+todayTrades.filter(t=>parseFloat(t.pnl||0)>0).length+" رابحة · "+todayLoss+" خاسرة"}</div>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:7,alignItems:"flex-end"}}>
+                  {locked&&<div style={{background:T.red,color:"#fff",borderRadius:10,padding:"8px 15px",fontWeight:900,fontSize:12.5}}>🔒 التداول مُقفل اليوم</div>}
+                  <div style={{display:"flex",gap:7}}>
+                    {[{l:"خسائر متتالية",v:consec,c:consec>=2?T.red:consec>=1?T.orange:T.green},{l:"صفقات اليوم",v:todayTrades.length,c:T.t1}].map((k,i)=>(
+                      <div key={i} style={{background:T.s2,borderRadius:10,padding:"8px 12px",textAlign:"center",border:`1px solid ${T.b0}`}}>
+                        <div style={{fontFamily:"monospace",fontWeight:900,fontSize:18,color:k.c}}>{k.v}</div>
+                        <div style={{color:T.t2,fontSize:9.5,marginTop:2}}>{k.l}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {consec===2&&!locked&&<div style={{marginTop:11,background:T.orangeD,borderRadius:8,padding:"8px 12px",color:T.orange,fontSize:12,fontWeight:600}}>⚠️ تحذير: خسارتان متتاليتان — خسارة أخرى وسيُقفل التداول</div>}
+            </div>
+            <div style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:14,padding:"16px 18px"}}>
+              <div style={{fontWeight:800,fontSize:13,color:T.gold,marginBottom:12}}>📅 سجل آخر 14 يوم</div>
+              {(()=>{const map={};trades.forEach(t=>{if(!map[t.date])map[t.date]={pnl:0,cnt:0,wins:0};map[t.date].pnl+=parseFloat(t.pnl||0);map[t.date].cnt++;if(parseFloat(t.pnl||0)>0)map[t.date].wins++;});const days=Object.entries(map).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,14);if(!days.length)return <div style={{textAlign:"center",padding:30,color:T.t2,fontSize:12.5}}>لا توجد صفقات بعد</div>;return days.map(([date,v])=>{const wr=Math.round(v.wins/v.cnt*100),isT=date===today;return(<div key={date} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 11px",borderRadius:8,background:isT?"#1E1608":T.s2,border:`1px solid ${isT?T.gold+"40":T.b0}`,marginBottom:5,borderRight:`3px solid ${v.pnl>=0?T.green:T.red}`}}><div style={{display:"flex",gap:11}}><span style={{fontSize:11.5,color:isT?T.gold:T.t2,fontWeight:isT?700:400}}>{isT?"اليوم":date}</span><span style={{fontSize:10.5,color:T.t3}}>{v.cnt+" صفقة · "+wr+"% نجاح"}</span></div><div style={{display:"flex",gap:9,alignItems:"center"}}><div style={{width:48,height:4,background:T.b0,borderRadius:99,overflow:"hidden"}}><div style={{width:wr+"%",height:"100%",background:v.pnl>=0?T.green:T.red,borderRadius:99}}/></div><span style={{fontFamily:"monospace",fontWeight:800,fontSize:12.5,color:v.pnl>=0?T.green:T.red,minWidth:54,textAlign:"left"}}>{fmtPnl(v.pnl)}</span></div></div>);});})()}
+            </div>
+          </div>
+        )}
+
+        {/* ── TRADES LIST ── */}
+        {tab==="trades"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:11}}>
+            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+              <input placeholder="🔍 ابحث..." value={search} onChange={e=>setSearch(e.target.value)} style={{flex:1,minWidth:185,background:T.s1,border:`1.5px solid ${T.b0}`,borderRadius:10,padding:"9px 13px",color:T.t0,fontSize:13.5,outline:"none"}} onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.b0}/>
+              {["الكل","رابحة","خاسرة"].map(f=><button key={f} onClick={()=>setFilt(f)} style={{padding:"9px 17px",borderRadius:10,border:"none",cursor:"pointer",fontWeight:700,fontSize:12.5,background:filt===f?T.gGold:T.s1,color:filt===f?"#060B14":T.t2,transition:"all .2s",boxShadow:filt===f?`0 3px 14px ${T.gold}35`:"none"}}>{f}</button>)}
+            </div>
+            {!visible.length?<div style={{textAlign:"center",padding:60,color:T.t2}}><div style={{fontSize:36,opacity:.35,marginBottom:10}}>📋</div>{!trades.length?"لا توجد صفقات بعد":"لا نتائج"}</div>:(
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {visible.map(t=>{const p=parseFloat(t.pnl||0);return(
+                  <div key={t.id} onClick={()=>setDetail(t)} className="rh" style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:12,padding:"13px 16px",borderRight:`4px solid ${p>=0?T.green:T.red}`,cursor:"pointer",transition:"all .18s"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                      <div style={{display:"flex",gap:7,alignItems:"center",flexWrap:"wrap"}}>
+                        <span style={{fontFamily:"monospace",fontWeight:900,fontSize:16,color:T.gold}}>{t.ticker}</span>
+                        {t.reason&&<span style={{fontSize:10.5,padding:"2px 8px",borderRadius:99,background:`${T.blue}18`,color:T.blue,fontWeight:600}}>{t.reason}</span>}
+                        {!t.disc&&<span style={{fontSize:10.5,padding:"2px 8px",borderRadius:99,background:`${T.red}18`,color:T.red,fontWeight:600}}>⚠️ خارج الخطة</span>}
+                        {t.mistakeType&&<span style={{fontSize:10.5,padding:"2px 8px",borderRadius:99,background:T.redD,color:T.red,fontWeight:600}}>❌ {t.mistakeType}</span>}
+                      </div>
+                      <div style={{display:"flex",gap:6,alignItems:"center"}} onClick={e=>e.stopPropagation()}>
+                        <div style={{textAlign:"left"}}><div style={{fontFamily:"monospace",fontWeight:900,fontSize:15.5,color:p>=0?T.green:T.red}}>{fmtPnl(p)}</div>{t.rr&&<div style={{color:T.t3,fontSize:9}}>{"RR "+t.rr+":1"}</div>}</div>
+                        {[["✏️",()=>{setEditT(t);setForm(true);},T.b2,T.blue],["🗑️",()=>delTrade(t.id),T.redD,T.red]].map(([ic,fn,bg,cl],i)=>(
+                          <button key={i} onClick={e=>{e.stopPropagation();fn();}} style={{background:T.b0,border:"none",color:T.t2,cursor:"pointer",width:27,height:27,borderRadius:7,fontSize:12.5,display:"flex",alignItems:"center",justifyContent:"center",transition:"all .15s"}} onMouseEnter={e=>{e.currentTarget.style.background=bg;e.currentTarget.style.color=cl;}} onMouseLeave={e=>{e.currentTarget.style.background=T.b0;e.currentTarget.style.color=T.t2;}}>{ic}</button>
+                        ))}
+                      </div>
+                    </div>
+                    <div style={{display:"flex",gap:10,marginTop:6,fontSize:10.5,color:T.t2,flexWrap:"wrap"}}>
+                      <span>{"📅 "+t.date}</span><span>{"$"+t.entry+" → $"+t.exit}</span><span>{"📦 "+t.shares}</span>{t.mood&&<span>{"🧠 "+t.mood}</span>}
+                    </div>
+                    {t.notes&&<div style={{marginTop:7,color:T.t2,fontSize:11,lineHeight:1.65,paddingTop:7,borderTop:`1px solid ${T.b0}12`}}>{"📝 "+t.notes}</div>}
+                  </div>
+                );})}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── RISK CALCULATOR ── */}
+        {tab==="risk"&&<RiskCalc curCap={curCap} userMode={userMode}/> }
+        {tab==="stats"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:13}}>
+            {!stats?<div style={{textAlign:"center",padding:60,color:T.t2}}><div style={{fontSize:36,opacity:.35,marginBottom:10}}>📐</div>أضف صفقتين على الأقل</div>:(
+              <>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(142px,1fr))",gap:10}}>
+                  {[{l:"Expectancy",v:(stats.exp>=0?"+":"")+"$"+stats.exp.toFixed(2),c:stats.exp>0?T.green:T.red,ic:"🎯",h:"ربحك المتوقع لكل دولار"},{l:"Profit Factor",v:stats.pf.toFixed(2)+"x",c:stats.pf>=1.5?T.green:stats.pf>=1?T.gold:T.red,ic:"⚖️",h:"أقل من 1.5 = ضعيف"},{l:"Max Drawdown",v:stats.maxDD.toFixed(1)+"%",c:stats.maxDD<10?T.green:stats.maxDD<20?T.orange:T.red,ic:"📉",h:"الحد الآمن <10%"},{l:"أطول سلسلة ربح",v:stats.streak,c:T.green,ic:"🔥",h:"أفضل تتالٍ رابح"},{l:"الانضباط",v:stats.disc+"%",c:stats.disc>=80?T.green:T.red,ic:"📋",h:"الالتزام بالخطة"},{l:"متوسط الربح",v:"+$"+stats.avgW.toFixed(0),c:T.green,ic:"💰",h:"لكل صفقة رابحة"}].map((k,i)=>(
+                    <div key={i} style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:12,padding:"13px 14px",borderTop:`2px solid ${k.c}35`}}>
+                      <div style={{fontSize:17,marginBottom:6}}>{k.ic}</div>
+                      <div style={{fontFamily:"monospace",fontWeight:900,fontSize:17,color:k.c,letterSpacing:-1}}>{k.v}</div>
+                      <div style={{color:T.t2,fontSize:10.5,marginTop:4,fontWeight:600}}>{k.l}</div>
+                      <div style={{color:T.t3,fontSize:9.5,marginTop:2}}>{k.h}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:13,padding:"15px 17px"}}>
+                  <div style={{fontWeight:800,fontSize:13,color:T.gold,marginBottom:11}}>📉 منحنى الـ Drawdown</div>
+                  <DDChart trades={trades} initial={initial}/>
+                  <div style={{display:"flex",gap:14,marginTop:8,flexWrap:"wrap"}}>
+                    <span style={{fontSize:11.5,color:T.t2}}>أقصى Drawdown: <strong style={{color:stats.maxDD>10?T.red:T.green}}>{stats.maxDD.toFixed(1)+"%"}</strong></span>
+                    <span style={{fontSize:11.5,color:T.t2}}>الهدف: <strong style={{color:T.green}}>أقل من 10%</strong></span>
+                  </div>
+                </div>
+                <div style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:13,padding:"15px 17px"}}>
+                  <div style={{fontWeight:800,fontSize:13,color:T.gold,marginBottom:11}}>📅 أداؤك حسب يوم الأسبوع</div>
+                  {Object.entries(stats.byDay).sort((a,b)=>b[1].pnl-a[1].pnl).map(([day,v])=>{
+                    const mx=Math.max(...Object.values(stats.byDay).map(x=>Math.abs(x.pnl)),1);
+                    return(<div key={day} style={{marginBottom:10}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{fontWeight:600,fontSize:12.5}}>{day}</span><div style={{display:"flex",gap:10}}><span style={{color:T.t2,fontSize:11}}>{v.n+" صفقة"}</span><span style={{fontFamily:"monospace",fontWeight:700,fontSize:12.5,color:v.pnl>=0?T.green:T.red}}>{fmtPnl(v.pnl)}</span></div></div><div style={{background:T.b0,borderRadius:99,height:4,overflow:"hidden"}}><div style={{width:(Math.abs(v.pnl)/mx*100)+"%",height:"100%",background:v.pnl>=0?T.green:T.red,borderRadius:99,transition:"width 1s"}}/></div></div>);
+                  })}
+                </div>
+                {Object.keys(stats.byMistake).length>0&&<div style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:13,padding:"15px 17px"}}>
+                  <div style={{fontWeight:800,fontSize:13,color:T.gold,marginBottom:11}}>❌ تحليل الأخطاء المتكررة</div>
+                  {Object.entries(stats.byMistake).sort((a,b)=>b[1].n-a[1].n).map(([m,v])=>(
+                    <div key={m} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 0",borderBottom:`1px solid ${T.b0}12`}}>
+                      <div><div style={{fontWeight:600,fontSize:12}}>{m}</div><div style={{color:T.t2,fontSize:10.5,marginTop:1}}>{v.n+" مرة"}</div></div>
+                      <div style={{fontFamily:"monospace",fontWeight:700,fontSize:12.5,color:T.red}}>{"-$"+Math.abs(v.loss).toFixed(0)}</div>
+                    </div>
+                  ))}
+                </div>}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── ANALYSIS ── */}
+        {tab==="analysis"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:13}}>
+            {!stats?<div style={{textAlign:"center",padding:60,color:T.t2}}><div style={{fontSize:36,opacity:.35,marginBottom:10}}>🧠</div>سجّل صفقات أولاً</div>:(
+              <>
+                {[{title:"🚀 الأداء حسب سبب الدخول",key:"reason"},{title:"🧠 تأثير الحالة النفسية",key:"mood"}].map(({title,key})=>{
+                  const g={};trades.forEach(t=>{const k=t[key]||"غير محدد";if(!g[k])g[k]={s:0,n:0,w:0};g[k].s+=parseFloat(t.pnl||0);g[k].n++;if(parseFloat(t.pnl||0)>0)g[k].w++;});
+                  const grps=Object.entries(g).sort((a,b)=>b[1].s-a[1].s);
+                  const mx=Math.max(...grps.map(([,v])=>Math.abs(v.s)),1);
+                  return(<div key={title} style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:13,padding:"15px 17px"}}>
+                    <div style={{fontWeight:800,fontSize:13,color:T.gold,marginBottom:12}}>{title}</div>
+                    {grps.map(([k,v])=>(
+                      <div key={k} style={{marginBottom:11}}>
+                        <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><div><span style={{fontWeight:700,fontSize:12.5}}>{k}</span><span style={{color:T.t2,fontSize:10.5,marginRight:7}}>{" "+v.n+" صفقة · "+Math.round(v.w/v.n*100)+"% نجاح"}</span></div><span style={{fontFamily:"monospace",fontWeight:800,fontSize:12.5,color:v.s>=0?T.green:T.red}}>{fmtPnl(v.s)}</span></div>
+                        <div style={{background:T.b0,borderRadius:99,height:4,overflow:"hidden"}}><div style={{width:(Math.abs(v.s)/mx*100)+"%",height:"100%",background:v.s>=0?T.green:T.red,borderRadius:99,transition:"width 1.2s"}}/></div>
+                      </div>
+                    ))}
+                  </div>);
+                })}
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(192px,1fr))",gap:10}}>
+                  {[{t:"متوسط الربح / رابحة",v:"+$"+stats.avgW.toFixed(0),c:T.green},{t:"متوسط الخسارة / خاسرة",v:"-$"+stats.avgL.toFixed(0),c:T.red},{t:"نسبة RR الفعلية",v:stats.rr+":1",c:parseFloat(stats.rr)>=2?T.green:T.gold},{t:"معدل الانضباط",v:stats.disc+"%",c:stats.disc>=80?T.green:T.red}].map((b,i)=>(
+                    <div key={i} style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:12,padding:"16px 17px",borderTop:`2px solid ${b.c}30`}}>
+                      <div style={{fontFamily:"monospace",fontWeight:900,fontSize:21,color:b.c,letterSpacing:-1}}>{b.v}</div>
+                      <div style={{color:T.t2,fontSize:11.5,marginTop:6}}>{b.t}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* ── REPORTS ── */}
+        {tab==="reports"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:10}}>
+              {[{l:"أقصى Drawdown",v:(stats?.maxDD||0).toFixed(1)+"%",c:(stats?.maxDD||0)<10?T.green:(stats?.maxDD||0)<20?T.orange:T.red,ic:"📉"},{l:"الاتساق",v:grouped.length?Math.round(grouped.filter(([,v])=>v.pnl>0).length/grouped.length*100)+"%":"—",c:T.gold,ic:"📊"},{l:"أفضل فترة",v:grouped.length?"+$"+Math.abs(grouped.reduce((m,g)=>g[1].pnl>m[1].pnl?g:m,grouped[0])[1].pnl).toFixed(0):"—",c:T.green,ic:"🏆"},{l:"أسوأ فترة",v:grouped.length?"-$"+Math.abs(grouped.reduce((m,g)=>g[1].pnl<m[1].pnl?g:m,grouped[0])[1].pnl).toFixed(0):"—",c:T.red,ic:"⚠️"}].map((k,i)=>(
+                <div key={i} style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:12,padding:"13px 14px",borderTop:`2px solid ${k.c}35`}}>
+                  <div style={{fontSize:17,marginBottom:6}}>{k.ic}</div>
+                  <div style={{fontFamily:"monospace",fontWeight:900,fontSize:18,color:k.c}}>{k.v}</div>
+                  <div style={{color:T.t2,fontSize:10.5,marginTop:4,fontWeight:600}}>{k.l}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",flexWrap:"wrap",gap:9}}>
+              <div style={{display:"flex",gap:7}}>{[["monthly","شهري"],["weekly","أسبوعي"]].map(([v,l])=><button key={v} onClick={()=>setRepPeriod(v)} style={{padding:"8px 15px",borderRadius:9,border:"none",cursor:"pointer",fontWeight:700,fontSize:12.5,background:repPeriod===v?T.gGold:T.s1,color:repPeriod===v?"#060B14":T.t2,transition:"all .2s"}}>{l}</button>)}</div>
+              <button onClick={()=>{const rows=[["التاريخ","السهم","الدخول","الخروج","الأسهم","الربح","سبب الدخول","الحالة","RR","الالتزام","نوع الخطأ"]];trades.forEach(t=>rows.push([t.date,t.ticker,t.entry,t.exit,t.shares,t.pnl,t.reason||"",t.mood||"",t.rr||"",t.disc?"نعم":"لا",t.mistakeType||""]));const csv=rows.map(r=>r.join(",")).join("\n");const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="mutlak-"+new Date().toISOString().split("T")[0]+".csv";a.click();}} style={{padding:"8px 15px",borderRadius:9,background:T.greenD,border:`1.5px solid ${T.green}50`,color:T.green,cursor:"pointer",fontWeight:700,fontSize:12.5}}>📥 تصدير CSV</button>
+            </div>
+            <div style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:13,overflow:"hidden"}}>
+              <div style={{padding:"11px 15px",borderBottom:`1px solid ${T.b0}`,display:"grid",gridTemplateColumns:"1fr 58px 52px 52px 85px",gap:7}}>{["الفترة","الصفقات","رابحة","خاسرة","الربح/الخسارة"].map((h,i)=><div key={i} style={{color:T.t3,fontSize:9.5,fontWeight:700,textTransform:"uppercase",textAlign:i>0?"center":"right"}}>{h}</div>)}</div>
+              {!grouped.length?<div style={{textAlign:"center",padding:40,color:T.t2,fontSize:12.5}}>لا توجد بيانات</div>:grouped.map(([key,v])=>(
+                <div key={key} style={{padding:"11px 15px",borderBottom:`1px solid ${T.b0}10`,display:"grid",gridTemplateColumns:"1fr 58px 52px 52px 85px",gap:7,alignItems:"center",transition:"background .15s"}} onMouseEnter={e=>e.currentTarget.style.background=T.s2} onMouseLeave={e=>e.currentTarget.style.background=""}>
+                  <div style={{fontWeight:600,fontSize:12.5,color:T.t1}}>{key}</div>
+                  <div style={{textAlign:"center",color:T.t2,fontSize:12.5}}>{v.cnt}</div>
+                  <div style={{textAlign:"center",color:T.green,fontSize:12.5,fontFamily:"monospace"}}>{v.wins}</div>
+                  <div style={{textAlign:"center",color:T.red,fontSize:12.5,fontFamily:"monospace"}}>{v.cnt-v.wins}</div>
+                  <div style={{textAlign:"center",fontFamily:"monospace",fontWeight:700,fontSize:12.5,color:v.pnl>=0?T.green:T.red}}>{fmtPnl(v.pnl)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── GOALS ── */}
+        {tab==="goals"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            <div style={{background:`linear-gradient(135deg,${T.goldD},${T.s0})`,border:`1px solid ${T.gold}30`,borderRadius:13,padding:"15px 18px"}}>
+              <div style={{fontWeight:800,fontSize:14,color:T.gold,marginBottom:3}}>🎯 متابعة الأهداف</div>
+              <div style={{color:T.t2,fontSize:11.5}}>حدّد أهدافك وتابع تقدمك نحو الحرية المالية</div>
+            </div>
+            <div style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:12,padding:"14px 16px"}}>
+              <div style={{fontWeight:700,fontSize:12.5,color:T.gold,marginBottom:11}}>⚙️ تحديد الأهداف</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+                {[["الشهري",mg,setMg,T.blue],["الأسبوعي",wg,setWg,T.green],["السنوي",yg,setYg,T.gold]].map(([l,v,s,col])=>(
+                  <div key={l}><label style={{display:"block",color:T.t2,fontSize:9.5,marginBottom:4,fontWeight:700,textTransform:"uppercase",letterSpacing:.5}}>{l}</label><input type="number" placeholder="0" value={v} onChange={e=>s(e.target.value)} style={{width:"100%",background:T.s2,border:`1.5px solid ${T.b1}`,borderRadius:8,padding:"8px 10px",color:T.t0,fontSize:13,outline:"none",fontFamily:"monospace"}} onFocus={e=>e.target.style.borderColor=col} onBlur={e=>e.target.style.borderColor=T.b1}/></div>
+                ))}
+              </div>
+              <button onClick={()=>setGoals({monthly:parseFloat(mg)||0,weekly:parseFloat(wg)||0,yearly:parseFloat(yg)||0})} style={{marginTop:11,padding:"9px 20px",borderRadius:9,background:T.gGold,color:"#060B14",border:"none",cursor:"pointer",fontWeight:900,fontSize:12.5}}>حفظ الأهداف</button>
+            </div>
+            {[{cur:mPnL,goal:mg,label:"الشهر الحالي — "+thisM,col:T.blue},{cur:yPnL,goal:yg,label:"سنة "+thisY,col:T.gold},{cur:totalPnL,goal:yg,label:"إجمالي كل الوقت",col:T.green}].map(({cur,goal,label,col})=>{
+              const pct=goal?Math.min(Math.abs(cur/goal*100),100):0;const ok=goal&&cur>=parseFloat(goal);
+              return(<div key={label} style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:12,padding:"14px 16px",marginBottom:0}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}><div><div style={{fontWeight:700,fontSize:13,color:T.t0}}>{label}</div><div style={{color:T.t2,fontSize:10.5,marginTop:2}}>{"الهدف: $"+(goal||"—")}</div></div><div style={{textAlign:"left"}}><div style={{fontFamily:"monospace",fontWeight:900,fontSize:17,color:cur>=0?col:T.red}}>{fmtPnl(cur)}</div>{goal&&<div style={{color:T.t2,fontSize:10,marginTop:1}}>{pct.toFixed(0)+"% من الهدف"}</div>}</div></div>
+                {goal&&<><div style={{background:T.b0,borderRadius:99,height:6,overflow:"hidden"}}><div style={{width:pct+"%",height:"100%",background:ok?`linear-gradient(90deg,${T.green},${T.goldL})`:col,borderRadius:99,transition:"width 1.2s",boxShadow:ok?`0 0 10px ${T.green}60`:"none"}}/></div>{ok&&<div style={{color:T.green,fontSize:11.5,fontWeight:700,marginTop:6,textAlign:"center"}}>🏆 تحقق الهدف! ممتاز</div>}</>}
+              </div>);
+            })}
+          </div>
+        )}
+
+        {/* ── WEEKLY REVIEW ── */}
+        {tab==="review"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            {!weeks2.length?<div style={{textAlign:"center",padding:60,color:T.t2}}><div style={{fontSize:36,opacity:.35,marginBottom:10}}>📋</div>سجّل صفقات أولاً</div>:(()=>{
+              const[wKey,wData]=weeks2[selWeek]||weeks2[0];const wr=Math.round(wData.wins/wData.trades.length*100);
+              return(<>
+                <div style={{background:`linear-gradient(135deg,${T.goldD},${T.s0})`,border:`1px solid ${T.gold}30`,borderRadius:13,padding:"15px 18px"}}>
+                  <div style={{fontWeight:800,fontSize:14,color:T.gold,marginBottom:3}}>📋 المراجعة الأسبوعية</div>
+                  <div style={{color:T.t2,fontSize:11.5}}>Mutlak Capitals يراجع أداءه كل أسبوع — اتبع نفس الأسلوب</div>
+                </div>
+                <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:3}}>
+                  {weeks2.map(([k,v],i)=><button key={k} onClick={()=>setSelWeek(i)} style={{padding:"6px 13px",borderRadius:9,border:"none",cursor:"pointer",fontWeight:700,fontSize:11.5,whiteSpace:"nowrap",background:selWeek===i?T.gGold:T.s1,color:selWeek===i?"#060B14":T.t2,flexShrink:0}}>{k+(v.pnl>=0?" ✅":" ❌")}</button>)}
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:9}}>
+                  {[{l:"صفقات",v:wData.trades.length,c:T.t1},{l:"النجاح",v:wr+"%",c:wr>=60?T.green:T.red},{l:"الربح/الخسارة",v:fmtPnl(wData.pnl),c:wData.pnl>=0?T.green:T.red},{l:"من الهدف",v:goals.weekly?Math.round(wData.pnl/goals.weekly*100)+"%":"—",c:wData.pnl>=(goals.weekly||0)?T.green:T.orange}].map((k,i)=>(
+                    <div key={i} style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:10,padding:"11px 12px",textAlign:"center"}}><div style={{fontFamily:"monospace",fontWeight:900,fontSize:16,color:k.c}}>{k.v}</div><div style={{color:T.t2,fontSize:9.5,marginTop:3}}>{k.l}</div></div>
+                  ))}
+                </div>
+                <div style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:12,padding:"13px 15px"}}>
+                  <div style={{fontWeight:700,fontSize:12.5,color:T.gold,marginBottom:9}}>صفقات الأسبوع</div>
+                  {wData.trades.map(t=>{const p=parseFloat(t.pnl||0);return(<div key={t.id} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${T.b0}10`}}><div style={{display:"flex",gap:8,alignItems:"center"}}><span style={{fontFamily:"monospace",fontWeight:700,fontSize:12.5,color:T.gold}}>{t.ticker}</span><span style={{color:T.t2,fontSize:10.5}}>{t.date}</span>{t.mistakeType&&<span style={{fontSize:9.5,padding:"1px 6px",borderRadius:99,background:T.redD,color:T.red}}>{t.mistakeType}</span>}</div><span style={{fontFamily:"monospace",fontWeight:700,fontSize:12.5,color:p>=0?T.green:T.red}}>{fmtPnl(p)}</span></div>);})}
+                </div>
+                <div style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:12,padding:"13px 15px"}}>
+                  <div style={{fontWeight:700,fontSize:12.5,color:T.gold,marginBottom:11}}>✍️ أسئلة المراجعة</div>
+                  {["ما هو أفضل قرار اتخذته هذا الأسبوع؟","ما هو أسوأ خطأ ارتكبته وكيف تتجنبه؟","هل التزمت بقواعد Mutlak Capitals؟","ما الذي ستفعله بشكل مختلف الأسبوع القادم؟"].map((q,i)=>(
+                    <div key={i} style={{marginBottom:11}}><div style={{color:T.t1,fontSize:12,marginBottom:4,fontWeight:600}}>{(i+1)+". "+q}</div><textarea placeholder="اكتب إجابتك..." rows={2} style={{width:"100%",background:T.s0,border:`1.5px solid ${T.b1}`,borderRadius:8,padding:"8px 11px",color:T.t0,fontSize:12,outline:"none",resize:"vertical",fontFamily:"inherit"}} onFocus={e=>e.target.style.borderColor=T.gold} onBlur={e=>e.target.style.borderColor=T.b1}/></div>
+                  ))}
+                </div>
+              </>);
+            })()}
+          </div>
+        )}
+
+        {/* ── JOURNAL ── */}
+        {tab==="journal"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:12}}>
+            <div style={{background:`linear-gradient(135deg,${T.purpleD},${T.s0})`,border:`1px solid ${T.purple}30`,borderRadius:13,padding:"15px 18px"}}>
+              <div style={{fontWeight:800,fontSize:14,color:T.purple,marginBottom:3}}>✍️ دفتر اليومية</div>
+              <div style={{color:T.t2,fontSize:11.5}}>اكتب يومياً — هذا ما يميز المتداول المحترف عن غيره</div>
+            </div>
+            <div style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:12,padding:"16px 18px"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:11}}>
+                <div style={{fontWeight:700,fontSize:13,color:T.t0}}>{"اليوم — "+today}</div>
+                <div style={{display:"flex",gap:4}}>{[1,2,3,4,5].map(r=><button key={r} onClick={()=>{setJRating(r);setJSaved(false);}} style={{width:25,height:25,borderRadius:6,border:`1.5px solid ${jRating>=r?T.gold:T.b1}`,background:jRating>=r?T.goldD:"transparent",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>{jRating>=r?"⭐":"☆"}</button>)}</div>
+              </div>
+              <textarea value={jContent} onChange={e=>{setJContent(e.target.value);setJSaved(false);}} rows={5} placeholder={"كيف كان أداؤك اليوم؟ ما الذي تعلمته؟ ما الذي ستغيره غداً؟\n\nMutlak Capitals يكتب كل يوم — هذه العادة هي سر تحسنه المستمر."} style={{width:"100%",background:T.s0,border:`1.5px solid ${T.b1}`,borderRadius:9,padding:"11px 13px",color:T.t0,fontSize:12.5,outline:"none",resize:"vertical",fontFamily:"inherit",lineHeight:1.75}} onFocus={e=>e.target.style.borderColor=T.purple} onBlur={e=>e.target.style.borderColor=T.b1}/>
+              <button onClick={()=>{setJournals(p=>({...p,[today]:{content:jContent,rating:jRating,date:today}}));setJSaved(true);}} style={{marginTop:9,padding:"9px 20px",borderRadius:9,background:T.purpleD,border:`1.5px solid ${T.purple}50`,color:T.purple,cursor:"pointer",fontWeight:700,fontSize:12.5}}>{jSaved?"✅ تم الحفظ":"💾 حفظ اليومية"}</button>
+            </div>
+            {Object.entries(journals).sort((a,b)=>b[0].localeCompare(a[0])).filter(([d])=>d!==today).slice(0,8).length>0&&(
+              <div style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:12,padding:"13px 15px"}}>
+                <div style={{fontWeight:700,fontSize:12.5,color:T.gold,marginBottom:10}}>📚 السجل السابق</div>
+                {Object.entries(journals).sort((a,b)=>b[0].localeCompare(a[0])).filter(([d])=>d!==today).slice(0,8).map(([date,j])=>(
+                  <div key={date} style={{padding:"9px 0",borderBottom:`1px solid ${T.b0}10`}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{fontSize:11.5,fontWeight:600,color:T.t1}}>{date}</span><div style={{display:"flex",gap:1}}>{Array.from({length:5}).map((_,i)=><span key={i} style={{fontSize:9.5,color:i<(j.rating||0)?T.gold:T.b1}}>{i<(j.rating||0)?"⭐":"☆"}</span>)}</div></div>
+                    <div style={{color:T.t2,fontSize:11.5,lineHeight:1.6,display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{j.content}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── AI ── */}
+        {tab==="ai"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:13}}>
+            <div style={{background:T.s1,border:`1px solid ${T.b1}`,borderRadius:14,padding:"18px 21px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
+              <div><div style={{fontWeight:800,fontSize:14.5,color:T.gold,marginBottom:4}}>🤖 تحليل الذكاء الاصطناعي المتقدم</div><div style={{color:T.t2,fontSize:12}}>يحلل Expectancy وProfit Factor وأنماط الأخطاء</div></div>
+              <button onClick={async()=>{
+                if(!trades.length||aiBusy)return;
+                setAiBusy(true);setAiText("");setAiErr("");
+                try{
+                  const W=trades.filter(t=>parseFloat(t.pnl||0)>0),L=trades.filter(t=>parseFloat(t.pnl||0)<0);
+                  const avgW=W.length?W.reduce((s,t)=>s+parseFloat(t.pnl),0)/W.length:0;
+                  const avgL=L.length?Math.abs(L.reduce((s,t)=>s+parseFloat(t.pnl),0)/L.length):0;
+                  const wr=trades.length?W.length/trades.length:0;
+                  const exp=(wr*avgW)-((1-wr)*avgL);
+                  const pf=avgL>0?(W.reduce((s,t)=>s+parseFloat(t.pnl),0)/Math.abs(L.reduce((s,t)=>s+parseFloat(t.pnl),0)||1)):0;
+                  const g={};trades.forEach(t=>{const k=t.reason||"غير محدد";if(!g[k])g[k]={s:0,n:0};g[k].s+=parseFloat(t.pnl||0);g[k].n++;});
+                  const topR=Object.entries(g).sort((a,b)=>b[1].s-a[1].s).slice(0,3).map(([k,v])=>k+"($"+v.s.toFixed(0)+")").join("، ");
+                  const mistakes2={};trades.filter(t=>t.mistakeType).forEach(t=>{if(!mistakes2[t.mistakeType])mistakes2[t.mistakeType]=0;mistakes2[t.mistakeType]++;});
+                  const topM=Object.entries(mistakes2).sort((a,b)=>b[1]-a[1])[0];
+                  const prompt="أنت محلل تداول خبير نظام Mutlak Capitals. حلّل هذه البيانات باللغة العربية:\n\nرأس المال: $"+initial+" → $"+curCap.toFixed(0)+" ("+((curCap/initial-1)*100).toFixed(1)+"%)\nالصفقات: "+trades.length+" | نجاح: "+Math.round(wr*100)+"% | RR: "+(stats?.rr||"N/A")+":1\nExpectancy: $"+exp.toFixed(2)+" | Profit Factor: "+pf.toFixed(2)+"x\nمتوسط ربح: $"+avgW.toFixed(0)+" | متوسط خسارة: $"+avgL.toFixed(0)+"\nالانضباط: "+(stats?.disc||0)+"% | أطول سلسلة: "+(stats?.streak||0)+"\nأفضل أسباب: "+topR+(topM?"\nالخطأ المتكرر: "+topM[0]+" ("+topM[1]+" مرات)":"")+"\nالمستخدم: "+userMode+" | الاسم: "+userName+"\n\nقدّم تحليلاً شاملاً:\n**📊 تقييم الأداء** (فقرة)\n**💪 نقاط القوة** (3 نقاط)\n**⚠️ نقاط التطوير** (3 نقاط)\n**🎯 توصيات فورية** (3 إجراءات)\n**🚨 تحذيرات** (إذا Expectancy أو PF ضعيف)\n**📈 الهدف القادم** (رقم محدد مع خطوات)";
+                  const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1200,messages:[{role:"user",content:prompt}]})});
+                  const data=await res.json();
+                  setAiText(data.content?.map(c=>c.text||"").join("")||"لم يتمكن النظام من التحليل.");
+                }catch(e){setAiErr("خطأ في الاتصال. حاول مجدداً.");}
+                setAiBusy(false);
+              }} disabled={aiBusy||!trades.length} style={{padding:"10px 22px",borderRadius:11,background:aiBusy||!trades.length?"transparent":T.gGold,color:aiBusy?T.gold:"#060B14",border:`1.5px solid ${T.gold}`,fontWeight:800,cursor:trades.length&&!aiBusy?"pointer":"not-allowed",fontSize:13,opacity:trades.length?1:.5,transition:"all .2s",boxShadow:!aiBusy&&trades.length?`0 4px 18px ${T.gold}30`:"none"}}>{aiBusy?"⏳ جارٍ التحليل...":"🔍 حلّل أدائي الآن"}</button>
+            </div>
+            {!aiText&&!aiBusy&&!aiErr&&<div style={{textAlign:"center",padding:"42px 20px",background:T.s1,borderRadius:13,border:`1px dashed ${T.b1}`,color:T.t2,fontSize:12.5}}><div style={{fontSize:36,marginBottom:10,opacity:.35}}>🧠</div>{trades.length?"اضغط الزر للتحليل الشامل":"سجّل صفقات أولاً"}</div>}
+            {aiBusy&&<div style={{background:T.s1,borderRadius:13,padding:"42px",textAlign:"center"}}><div style={{fontSize:32,animation:"pulse 1.4s infinite",display:"inline-block"}}>🤖</div><div style={{color:T.gold,fontSize:11.5,fontFamily:"monospace",letterSpacing:2,marginTop:12}}>يُحلّل بياناتك...</div></div>}
+            {aiErr&&<div style={{padding:"13px 17px",background:T.redD,borderRadius:11,border:`1px solid ${T.red}40`,color:T.red,fontSize:12.5}}>{aiErr}</div>}
+            {aiText&&<div style={{background:T.s1,borderRadius:13,padding:"19px 21px",border:`1px solid ${T.b1}`,fontSize:13,lineHeight:1.9,color:T.t1}}>{aiText.split("**").map((p,i)=>i%2===1?<strong key={i} style={{color:T.gold,display:"block",marginTop:i>1?12:0,marginBottom:4}}>{p}</strong>:<span key={i}>{p}</span>)}</div>}
+          </div>
+        )}
+
+        {/* ── RULES ── */}
+        {tab==="rules"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{background:`linear-gradient(135deg,${T.goldD},${T.s0})`,border:`1px solid ${T.gold}28`,borderRadius:13,padding:"15px 19px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:11,marginBottom:8}}><img src={LOGO} alt="" style={{height:29,filter:`drop-shadow(0 2px 10px ${T.gold}55)`}}/><div style={{fontWeight:900,fontSize:14,color:T.gold}}>قواعد نجاح Mutlak Capitals</div></div>
+              <p style={{color:T.t2,fontSize:12.5,lineHeight:1.85}}>{"من "}</p>
+            </div>
+            {[{n:"01",ic:"🚀",c:T.green,t:"أسهم صغيرة ذات زخم فقط",d:"$2-$10، حجم 5x+، محفّز إخباري."},{n:"02",ic:"🛡️",c:T.blue,t:"لا تخاطر بأكثر من 1% في صفقة",d:"رأس مال $5K = حد خسارة $50."},{n:"03",ic:"⚖️",c:T.gold,t:"نسبة RR 2:1 حداً أدنى",d:"هدفك دائماً ضعف مخاطرتك."},{n:"04",ic:"🛑",c:T.red,t:"Stop Loss في كل صفقة",d:"الصفقة بدون Stop هي مقامرة."},{n:"05",ic:"⏰",c:T.blue,t:"التداول 9:30-11:30 EST",d:"أقوى وقت زخم. Mutlak Capitals يغلق بعد ساعتين."},{n:"06",ic:"⏸️",c:T.red,t:"3 خسائر متتالية = توقف",d:"توقف واستراح وعد غداً."},{n:"07",ic:"✂️",c:T.gold,t:"خذ الأرباح ولا تتطمع",d:"عند الوصول للهدف أغلق فوراً."},{n:"08",ic:"🧘",c:T.red,t:"لا تداول بعاطفة الانتقام",d:"الخسارة + الانتقام = كارثة."}].map(r=>(
+              <div key={r.n} style={{background:T.s1,border:`1px solid ${T.b0}`,borderRadius:12,padding:"14px 16px",borderRight:`4px solid ${r.c}`,transition:"transform .2s"}} onMouseEnter={e=>e.currentTarget.style.transform="translateX(-4px)"} onMouseLeave={e=>e.currentTarget.style.transform=""}>
+                <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+                  <div style={{fontSize:19,flexShrink:0,marginTop:1}}>{r.ic}</div>
+                  <div><div style={{display:"flex",alignItems:"center",gap:7,marginBottom:4}}><span style={{fontFamily:"monospace",fontSize:9.5,color:r.c,fontWeight:700,background:r.c+"14",padding:"2px 7px",borderRadius:5}}>{"قاعدة "+r.n}</span><span style={{fontWeight:800,fontSize:13}}>{r.t}</span></div><p style={{color:T.t2,fontSize:11.5,lineHeight:1.75}}>{r.d}</p></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* ════ FOOTER ════ */}
+      <footer style={{background:T.s0,borderTop:`1px solid ${T.b0}`}}>
+        <div style={{height:1,background:`linear-gradient(90deg,transparent,${T.gold}40,transparent)`}}/>
+        <div style={{maxWidth:1440,margin:"0 auto",padding:"10px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:7}}>
+          <div style={{display:"flex",alignItems:"center",gap:7}}>
+            <img src={LOGO} alt="" style={{height:18,opacity:.6}}/>
+            <span style={{color:T.t3,fontSize:10.5}}>{"© 2025 Mutlak Capitals · Journal & Scanner PRO "+APP_VERSION}</span>
+          </div>
+          <div style={{display:"flex",gap:12,alignItems:"center"}}>
+            <span style={{color:T.t3,fontSize:10}}>⚠️ للأغراض التعليمية فقط</span>
+            {trades.length>0&&<span style={{color:T.gold,fontFamily:"monospace",fontSize:11,fontWeight:700,background:T.goldD,padding:"2px 8px",borderRadius:5}}>{trades.length+" صفقة"}</span>}
+          </div>
+        </div>
+      </footer>
+
+      {/* ════ MODALS ════ */}
+      {form&&<TradeForm onSave={saveTrade} onClose={()=>{setForm(false);setEditT(null);}} edit={editT} curCap={curCap} locked={locked&&!editT} mode={userMode}/>}
+
+      {detail&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(3,7,13,.96)",backdropFilter:"blur(12px)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:14,direction:"rtl"}}>
+          <div style={{background:T.s1,border:`1px solid ${T.b2}`,borderRadius:18,width:"100%",maxWidth:460,padding:"21px 23px",boxShadow:`0 32px 80px rgba(0,0,0,.7),0 0 0 1px ${T.gold}15`}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,paddingBottom:12,borderBottom:`1px solid ${T.b0}`}}>
+              <div style={{display:"flex",gap:10,alignItems:"center"}}>
+                <span style={{fontFamily:"monospace",fontWeight:900,fontSize:20,color:T.gold}}>{detail.ticker}</span>
+                <span style={{padding:"3px 12px",borderRadius:99,fontWeight:700,fontSize:12.5,fontFamily:"monospace",background:parseFloat(detail.pnl)>=0?T.greenD:T.redD,color:parseFloat(detail.pnl)>=0?T.green:T.red}}>{fmtPnl(detail.pnl)}</span>
+              </div>
+              <button onClick={()=>setDetail(null)} style={{background:T.b0,border:"none",color:T.t2,borderRadius:8,width:28,height:28,cursor:"pointer",fontSize:13,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+            </div>
+            {[["📅 التاريخ",detail.date],["💵 الدخول","$"+detail.entry],["🎯 الخروج","$"+detail.exit],["📦 الأسهم",detail.shares+" سهم"],["⚖️ نسبة RR",detail.rr?detail.rr+":1":"—"],["🚀 سبب الدخول",detail.reason||"—"],["🧠 الحالة النفسية",detail.mood||"—"],["📋 الالتزام",detail.disc?"✅ نعم":"❌ لا"],["❌ نوع الخطأ",detail.mistakeType||"—"]].map(([k,v])=>(
+              <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${T.b0}10`}}>
+                <span style={{color:T.t2,fontSize:12}}>{k}</span><span style={{fontWeight:600,fontSize:12,color:T.t0}}>{v}</span>
+              </div>
+            ))}
+            {detail.notes&&<div style={{marginTop:10,background:T.s2,borderRadius:9,padding:"9px 12px",border:`1px solid ${T.b0}`}}><div style={{color:T.t3,fontSize:9.5,marginBottom:3}}>📝 الملاحظات</div><div style={{fontSize:12,lineHeight:1.7,color:T.t1}}>{detail.notes}</div></div>}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:12}}>
+              <button onClick={()=>{setEditT(detail);setDetail(null);setForm(true);}} style={{padding:"10px",borderRadius:9,background:"transparent",border:`1.5px solid ${T.b1}`,color:T.t2,cursor:"pointer",fontWeight:700,fontSize:12,transition:"all .15s"}} onMouseEnter={e=>{e.currentTarget.style.borderColor=T.gold;e.currentTarget.style.color=T.gold;}} onMouseLeave={e=>{e.currentTarget.style.borderColor=T.b1;e.currentTarget.style.color=T.t2;}}>✏️ تعديل</button>
+              <button onClick={()=>delTrade(detail.id)} style={{padding:"10px",borderRadius:9,background:T.redD,border:`1.5px solid ${T.red}40`,color:T.red,cursor:"pointer",fontWeight:700,fontSize:12}}>🗑️ حذف</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast&&<div style={{position:"fixed",bottom:22,left:"50%",transform:"translateX(-50%)",background:T.s1,border:`1.5px solid ${toast.type==="ok"?T.gold:T.red}`,borderRadius:11,padding:"11px 22px",color:T.t0,fontWeight:700,fontSize:13,zIndex:999,animation:"fadeUp .3s ease",boxShadow:`0 8px 32px ${toast.type==="ok"?T.gold:T.red}28`,whiteSpace:"nowrap"}}>{toast.msg}</div>}
+    </div>
+  );
+}
+
+
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(React.createElement(App));
+    setTimeout(window.__hideLoading, 100);
+  </script>
+</body>
+</html>

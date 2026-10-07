@@ -2,5 +2,12 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "mutlak-capitals",
   "main": "worker.js",
-  "compatibility_date": "2026-10-07"
+  "compatibility_date": "2026-10-07",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "mutlak_capitals_db",
+      "database_id": "4ae0e835-c67c-403b-8021-25f33648c0dd"
+    }
+  ]
 }
